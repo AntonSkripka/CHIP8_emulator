@@ -1,3 +1,5 @@
+import { asmToBin } from './asm.js';
+
 class Chip8Emulator {
     constructor(canvas, module) {
         this.canvas = canvas;
@@ -49,6 +51,26 @@ class Chip8Emulator {
 }
 
 createChip8().then(Module => {
+    let codeTest = `
+; --- Секція коду ---
+ORG 0x200
+LD V0, 0x02       ; 6002
+LD V1, 0x02       ; 6102
+LD I, 0x500       ; A500 
+DRW V0, V1, 0x5     ; D015 
+
+LOOP:
+JP LOOP          ; 1208 
+
+; --- Секція даних ---
+ORG 0x500
+DB 0x3C           ; 00111100
+DB 0x42           ; 01000010
+DB 0x81           ; 10000001
+DB 0x42           ; 01000010
+DB 0x3C           ; 00111100
+`;
+    asmToBin(codeTest);
     const canvas = document.getElementById('display');
     const emu = new Chip8Emulator(canvas, Module);
     emu.start();
