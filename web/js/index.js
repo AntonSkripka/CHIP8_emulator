@@ -21,21 +21,37 @@ class Chip8Emulator {
         let codeTest = `
 ; --- Секція коду ---
 ORG 0x200
-LD V0, 0x02       ; 6002
-LD V1, 0x02       ; 6102
-LD I, 0x500       ; A500 
-DRW V0, V1, 0x5     ; D015 
+LD V0, 0x00       ; X = 0
+LD V1, 0x00       ; Y = 0
+LD V2, 0x01    
+LD V4, 0x01
 
-LOOP:
-JP LOOP          ; 1208 
+MAIN_LOOP:
+LD I, 0x500
+DRW V0, V1, 0x5
+
+LD V3, 0xFF
+DELAY:
+SUB V3, V4
+SE V3, 0x00
+JP DELAY
+
+DRW V0, V1, 0x5
+
+ADD V0, V2     ; X = X + 1
+ADD V1, V2     ; Y = Y + 1
+AND V0, 0x3F   ; (V0 % 64)
+AND V1, 0x1F   ; (V1 % 32)
+
+JP MAIN_LOOP
 
 ; --- Секція даних ---
 ORG 0x500
-DB 0x3C           ; 00111100
-DB 0x42           ; 01000010
-DB 0x81           ; 10000001
-DB 0x42           ; 01000010
-DB 0x3C           ; 00111100
+DB 0x3C
+DB 0x42
+DB 0x81
+DB 0x42
+DB 0x3C
 `;
 
         // this.module._load_opcode_at(0x200, 0xA000);
