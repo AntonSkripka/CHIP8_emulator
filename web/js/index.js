@@ -18,9 +18,29 @@ class Chip8Emulator {
 
         const firstPixel = new Uint32Array(this.module.HEAPU8.buffer, this.displayPtr, 1)[0];
         console.log(firstPixel);
+        let codeTest = `
+; --- Секція коду ---
+ORG 0x200
+LD V0, 0x02       ; 6002
+LD V1, 0x02       ; 6102
+LD I, 0x500       ; A500 
+DRW V0, V1, 0x5     ; D015 
 
-        this.module._load_opcode_at(0x200, 0xA000);
-        this.module._load_opcode_at(0x202, 0xD005);
+LOOP:
+JP LOOP          ; 1208 
+
+; --- Секція даних ---
+ORG 0x500
+DB 0x3C           ; 00111100
+DB 0x42           ; 01000010
+DB 0x81           ; 10000001
+DB 0x42           ; 01000010
+DB 0x3C           ; 00111100
+`;
+
+        // this.module._load_opcode_at(0x200, 0xA000);
+        // this.module._load_opcode_at(0x202, 0xD005);
+        this.loadBin(codeTest);
     }
 
     render() {
@@ -48,29 +68,28 @@ class Chip8Emulator {
         };
         requestAnimationFrame(loop);
     }
+
+    loadBin(code) {
+        let result = asmToBin(code);
+        for (let i = 0; i < result.length; i++) {
+            if (result[i].mode === 1) {
+                for (let j = 0; j < result[i].binCode.length; j++) {
+                    result[i].start = parseInt(result[i].start);
+                    this.module._load_opcode_at(result[i].start, result[i].binCode[j]);
+                    result[i].start = parseInt(result[i].start) + 0x002;
+                }
+            } else {
+                for (let j = 0; j < result[i].binData.length; j++) {
+                    result[i].start = parseInt(result[i].start);
+                    this.module._load_data_at(result[i].start, result[i].binData[j]);
+                    result[i].start = parseInt(result[i].start) + 0x001;
+                }
+            }
+        }
+    }
 }
 
 createChip8().then(Module => {
-    let codeTest = `
-; --- Секція коду ---
-ORG 0x200
-LD V0, 0x02       ; 6002
-LD V1, 0x02       ; 6102
-LD I, 0x500       ; A500 
-DRW V0, V1, 0x5     ; D015 
-
-LOOP:
-JP LOOP          ; 1208 
-
-; --- Секція даних ---
-ORG 0x500
-DB 0x3C           ; 00111100
-DB 0x42           ; 01000010
-DB 0x81           ; 10000001
-DB 0x42           ; 01000010
-DB 0x3C           ; 00111100
-`;
-    asmToBin(codeTest);
     const canvas = document.getElementById('display');
     const emu = new Chip8Emulator(canvas, Module);
     emu.start();

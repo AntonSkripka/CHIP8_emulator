@@ -181,6 +181,13 @@ void load_opcode_at(uint16_t addr, uint16_t opcode) {
     }
 }
 
+EMSCRIPTEN_KEEPALIVE
+void load_data_at(uint16_t addr, uint8_t data) {
+    if (addr < MEMORY_SIZE) {
+        instance.memory[addr] = data;
+    }
+}
+
 EMSCRIPTEN_KEEPALIVE void *get_display_ptr() { return instance.display; }
 EMSCRIPTEN_KEEPALIVE void *get_v_regs_ptr() { return instance.V; }
 EMSCRIPTEN_KEEPALIVE uint16_t get_pc() { return instance.pc; }
