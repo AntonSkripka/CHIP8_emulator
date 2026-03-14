@@ -4,7 +4,7 @@ OUT = web/js/chip8.js
 
 FLAGS = -s MODULARIZE=1 \
         -s EXPORT_NAME="createChip8" \
-        -s "EXPORTED_FUNCTIONS=['_init', '_step', '_get_display_ptr', '_get_draw_flag', '_clear_draw_flag', '_load_opcode_at', '_malloc', '_free']" \
+        -s "EXPORTED_FUNCTIONS=['_init', '_set_key' , '_update_timers' , '_step', '_load_data_at' , '_get_display_ptr', '_get_draw_flag', '_clear_draw_flag', '_load_opcode_at', '_malloc', '_free']" \
         -s "EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap', 'HEAPU8', 'HEAP32']" \
         -s ALLOW_MEMORY_GROWTH=1 \
         -O3

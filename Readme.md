@@ -35,10 +35,10 @@ make
 This project is evolving from a simple WASM core to a full-featured development environment for CHIP-8.
 
 ### Phase 1: Interaction & Input
-- [ ] **Keyboard Mapping:** Implement a 4x4 hex keypad mapping (Standard CHIP-8 layout: 1-4, Q-R, A-F, Z-V).
+- [x] **Keyboard Mapping:** Implement a 4x4 hex keypad mapping (Standard CHIP-8 layout: 1-4, Q-R, A-F, Z-V).
 
 ### Phase 2: Integrated Development Environment (IDE)
-- [ ] **CHIP-8 Assembler:** Build a web-based assembler to write mnemonics (e.g., `LD V0, 0xFF`) and compile them to bytecode directly in the browser.
+- [x] **CHIP-8 Assembler:** Build a web-based assembler to write mnemonics (e.g., `LD V0, 0xFF`) and compile them to bytecode directly in the browser.
 - [ ] **Memory Monitor:** Real-time visualization of the 4KB RAM and V-registers.
 
 ### Phase 3: Game Engine & Compatibility

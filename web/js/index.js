@@ -1,5 +1,12 @@
 import { asmToBin } from './asm.js';
 
+const KEY_MAP = {
+    '1': 0x1, '2': 0x2, '3': 0x3, '4': 0xC,
+    'q': 0x4, 'w': 0x5, 'e': 0x6, 'r': 0xD,
+    'a': 0x7, 's': 0x8, 'd': 0x9, 'f': 0xE,
+    'z': 0xA, 'x': 0x0, 'c': 0xB, 'v': 0xF
+};
+
 class Chip8Emulator {
     constructor(canvas, module) {
         this.canvas = canvas;
@@ -16,42 +23,65 @@ class Chip8Emulator {
     init() {
         this.module._init();
 
-        const firstPixel = new Uint32Array(this.module.HEAPU8.buffer, this.displayPtr, 1)[0];
-        console.log(firstPixel);
+        window.addEventListener('keydown', (e) => {
+            console.log("Pressed:", e.key);
+            const keyIndex = KEY_MAP[e.key.toLowerCase()];
+            if (keyIndex !== undefined) {
+                this.module._set_key(keyIndex, 1);
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const keyIndex = KEY_MAP[e.key.toLowerCase()];
+            if (keyIndex !== undefined) {
+                this.module._set_key(keyIndex, 0);
+            }
+        });
+
         let codeTest = `
-; --- Секція коду ---
 ORG 0x200
-LD V0, 0x00       ; X = 0
-LD V1, 0x00       ; Y = 0
-LD V2, 0x01    
-LD V4, 0x01
+    LD V0, 0x10      ; X
+    LD V1, 0x10      ; Y
+    LD V2, 0x01
+    LD I, 0x500
 
-MAIN_LOOP:
-LD I, 0x500
-DRW V0, V1, 0x5
+MAIN:
+    DRW V0, V1, 0x5
 
-LD V3, 0xFF
-DELAY:
-SUB V3, V4
-SE V3, 0x00
-JP DELAY
+WAIT_FRAME:
+    LD V3, 0x01
+    LD DT, V3
+;SYNC:
+;    LD V3, DT
+;    SE V3, 0x00
+;    JP SYNC
 
-DRW V0, V1, 0x5
+    DRW V0, V1, 0x5
 
-ADD V0, V2     ; X = X + 1
-ADD V1, V2     ; Y = Y + 1
-AND V0, 0x3F   ; (V0 % 64)
-AND V1, 0x1F   ; (V1 % 32)
+    LD V5, 0x05      ; W
+    SKNP V5
+    SUB V1, V2
 
-JP MAIN_LOOP
+    LD V5, 0x08      ; S
+    SKNP V5
+    ADD V1, V2
 
-; --- Секція даних ---
+    LD V5, 0x07      ; A
+    SKNP V5
+    SUB V0, V2
+
+    LD V5, 0x09      ; D
+    SKNP V5
+    ADD V0, V2
+
+    JP MAIN
+
 ORG 0x500
-DB 0x3C
-DB 0x42
-DB 0x81
-DB 0x42
-DB 0x3C
+    DB 0x20 
+    DB 0x70 
+    DB 0xF8 
+    DB 0x70 
+    DB 0x20
 `;
 
         // this.module._load_opcode_at(0x200, 0xA000);
@@ -79,6 +109,8 @@ DB 0x3C
                 this.module._step();
             }
 
+            this.module._update_timers();
+
             this.render();
             requestAnimationFrame(loop);
         };
@@ -86,19 +118,19 @@ DB 0x3C
     }
 
     loadBin(code) {
-        let result = asmToBin(code);
-        for (let i = 0; i < result.length; i++) {
-            if (result[i].mode === 1) {
-                for (let j = 0; j < result[i].binCode.length; j++) {
-                    result[i].start = parseInt(result[i].start);
-                    this.module._load_opcode_at(result[i].start, result[i].binCode[j]);
-                    result[i].start = parseInt(result[i].start) + 0x002;
-                }
-            } else {
-                for (let j = 0; j < result[i].binData.length; j++) {
-                    result[i].start = parseInt(result[i].start);
-                    this.module._load_data_at(result[i].start, result[i].binData[j]);
-                    result[i].start = parseInt(result[i].start) + 0x001;
+        let segments = asmToBin(code);
+        if (!segments) return;
+
+        for (let seg of segments) {
+            let currentAddr = parseInt(seg.start);
+
+            for (let item of seg.bytes) {
+                if (item.size === 2) {
+                    this.module._load_opcode_at(currentAddr, item.val);
+                    currentAddr += 2;
+                } else {
+                    this.module._load_data_at(currentAddr, item.val);
+                    currentAddr += 1;
                 }
             }
         }

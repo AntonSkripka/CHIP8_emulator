@@ -36,35 +36,24 @@ const commandTable = {
     'VF': [0x0F00, 0x00F0]
 };
 
-// const registersTable = {
-//     'V0':  [0x00, 0x000],
-//     'V1':  [0x01, 0x001],
-//     'V2':  [0x02, 0x002],
-//     'V3':  [0x03, 0x003],
-//     'V4':  [0x04, 0x004],
-//     'V5':  [0x05, 0x005],
-//     'V6':  [0x06, 0x006],
-//     'V7':  [0x07, 0x007],
-//     'V8':  [0x08, 0x008],
-//     'V9':  [0x09, 0x009],
-//     'VA':  [0x0A, 0x00A],
-//     'VB':  [0x0B, 0x00B],
-//     'VC':  [0x0C, 0x00C],
-//     'VD':  [0x0D, 0x00D],
-//     'VE':  [0x0E, 0x00E],
-//     'VF':  [0x0F, 0x00F]
-// };
-
 let currentAddress = 0x200;
 let labels = {};
-let ResultBin = [];
 
 export function asmToBin(code) {
     let cleanCode = code.replace(/\s*;[^\n\r]*/g, "").replace(/^\s*[\r\n]/gm, "").trim();
     let cleanCodeArray = cleanCode.replaceAll(",", "").split("\n");
+    cleanCodeArray = cleanCodeArray.map(line => {
+        return line.trim().split(/\s+/);
+    });
     let codeTokens = [];
     for (let i = 0; i < cleanCodeArray.length; i++) {
-        codeTokens.push(cleanCodeArray[i].split(" "));
+        if (cleanCodeArray[i][0].endsWith(":")) {
+            labels[cleanCodeArray[i][0].slice(0, -1)] = currentAddress;
+        };
+    }
+
+    for (let i = 0; i < cleanCodeArray.length; i++) {
+        codeTokens.push(cleanCodeArray[i]);
         if (codeTokens[i][0] == "ORG") {
             currentAddress = codeTokens[i][1];
             // codeTokens.splice(i, 1);
@@ -112,6 +101,7 @@ export function asmToBin(code) {
                         continue;
                     } else if (codeTokens[i][j + 2] === 'DT') {
                         codeTokens[i][j] = commandTable[codeTokens[i][j]][3];
+                        codeTokens[i].splice(j+2, 1);
                         continue;
                     } else if (codeTokens[i][j + 2] === '[I]') {
                         codeTokens[i][j] = commandTable[codeTokens[i][j]][10];
@@ -130,7 +120,7 @@ export function asmToBin(code) {
                     continue;
                 } else if (codeTokens[i][j + 1] === 'DT') {
                     codeTokens[i][j] = commandTable[codeTokens[i][j]][5];
-
+                    codeTokens[i].splice(j+1, 1);
                     continue;
                 } else if (codeTokens[i][j + 1] === 'ST') {
                     codeTokens[i][j] = commandTable[codeTokens[i][j]][6];
@@ -209,6 +199,15 @@ export function asmToBin(code) {
 
     let bin = [];
     let currentSegment = null;
+
+    const hasUndefined = codeTokens.flat(Infinity).includes(undefined);
+    if (hasUndefined) {
+        console.log(codeTokens);
+        console.log(labels);
+        console.log(`Syntax error`);
+        return null;
+    };
+
     const tokens = codeTokens.filter(item => item !== null);
 
     for (let i = 0; i < tokens.length; i++) {
@@ -220,9 +219,7 @@ export function asmToBin(code) {
             if (currentSegment) bin.push(currentSegment);
             currentSegment = {
                 start: value,
-                binCode: [],
-                binData: [],
-                mode: 1
+                bytes: [],
             };
             continue;
         }
@@ -230,12 +227,9 @@ export function asmToBin(code) {
         if (!currentSegment) continue;
 
         if (cmd === 'DB') {
-            currentSegment.mode = 0;
-            Array.isArray(value) ? currentSegment.binData.push(...value) : currentSegment.binData.push(value);
-        } else if (cmd === 'ENDDB') {
-            currentSegment.mode = 1;
+            const vals = Array.isArray(value) ? value : [value];
+            vals.forEach(v => currentSegment.bytes.push({ val: v & 0xFF, size: 1 }));
         } else {
-            if (currentSegment.mode === 1) {
                 let opcode = 0;
                 for (let j = 0; j < row.length; j++) {
                     let part = parseInt(row[j]);
@@ -245,8 +239,7 @@ export function asmToBin(code) {
                     }
                 }
 
-                currentSegment.binCode.push(opcode & 0xFFFF);
-            }
+                currentSegment.bytes.push({ val: opcode & 0xFFFF, size: 2 });
         }
     }
 
