@@ -2,6 +2,15 @@
 
 A high-performance CHIP-8 emulator core written in **C** and compiled to **WebAssembly (WASM)** using Emscripten. The frontend is built with modern JavaScript and HTML5 Canvas.
 
+## Legal Disclaimer
+This project is developed for educational and research purposes only.
+
+ROMs: The "Pong" game included in this repository is a classic 1970s implementation provided as a built-in demo to verify the emulator's functionality.
+
+Copyright: All rights to the original game logic and assets belong to their respective creators.
+
+Removal: If you are the copyright holder of any code included here and wish for it to be removed, please open an Issue or contact me, and I will delete it immediately.
+
 ## Features
 - **WASM Core:** Efficient CPU emulation written in C.
 - **Fast Rendering:** Direct memory access between WASM and JS via `Uint8ClampedArray`.

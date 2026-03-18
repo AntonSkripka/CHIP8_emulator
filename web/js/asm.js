@@ -167,11 +167,11 @@ export function asmToBin(code) {
                 }
             } else if (codeTokens[i][j] === 'SE') {
                 if (codeTokens[i][j + 2] in commandTable) {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][0];
+                    codeTokens[i][j] = commandTable[codeTokens[i][j]][1];
 
                     continue;
                 } else {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][1];
+                    codeTokens[i][j] = commandTable[codeTokens[i][j]][0];
 
                     continue;
                 }
