@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CHIP-8</title>
     <link rel="stylesheet" href="./css/style.css">
 </head>
+
 <body>
     <h1>CHIP-8 WASM</h1>
     <canvas id="display" width="64" height="32"></canvas>
-
+    <canvas id="memory-map-canvas" style="border: 1px solid #555; image-rendering: pixelated;"></canvas>
+    <div id="mem-info"
+        style="font-family: monospace; background: #222; color: #0f0; padding: 10px; margin-top: 5px; border: 1px solid #444; min-height: 1.2em;">
+        Addr: 0x000 | Val: 0x00 (0)
+    </div>
     <script src="./js/chip8.js"></script>
     <script type="module" src="./js/asm.js"></script>
     <script type="module" src="./js/index.js"></script>
 </body>
+
 </html>

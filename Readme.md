@@ -48,7 +48,7 @@ This project is evolving from a simple WASM core to a full-featured development 
 
 ### Phase 2: Integrated Development Environment (IDE)
 - [x] **CHIP-8 Assembler:** Build a web-based assembler to write mnemonics (e.g., `LD V0, 0xFF`) and compile them to bytecode directly in the browser.
-- [ ] **Memory Monitor:** Real-time visualization of the 4KB RAM and V-registers.
+- [x] **Memory Monitor:** Real-time visualization of the 4KB RAM and V-registers.
 
 ### Phase 3: Game Engine & Compatibility
 - [ ] **ROM Loader:** Drag-and-drop support for `.ch8` files.

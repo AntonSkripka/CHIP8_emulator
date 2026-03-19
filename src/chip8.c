@@ -193,3 +193,5 @@ EMSCRIPTEN_KEEPALIVE void *get_v_regs_ptr() { return instance.V; }
 EMSCRIPTEN_KEEPALIVE uint16_t get_pc() { return instance.pc; }
 EMSCRIPTEN_KEEPALIVE bool get_draw_flag() { return instance.draw_flag; }
 EMSCRIPTEN_KEEPALIVE void clear_draw_flag() { instance.draw_flag = false; }
+EMSCRIPTEN_KEEPALIVE void* get_mem_ptr() { return instance.memory; }
+EMSCRIPTEN_KEEPALIVE uint16_t get_i() { return instance.I; }

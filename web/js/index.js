@@ -15,9 +15,32 @@ class Chip8Emulator {
         this.width = 64;
         this.height = 32;
         this.displayPtr = this.module._get_display_ptr();
+        this.vRegsPtr = this.module._get_v_regs_ptr();
+        this.vRegisters = new Uint8Array(this.module.HEAPU8.buffer, this.vRegsPtr, 16);
         this.imageData = this.ctx.createImageData(this.width, this.height);
-
+        this.regElements = [];
+        this.createDebugUI();
         this.init();
+        this.memCanvas = document.getElementById('memory-map-canvas');
+        this.memCtx = this.memCanvas.getContext('2d');
+        this.memoryPtr = this.module._get_mem_ptr();
+        this.memoryView = new Uint8Array(this.module.HEAPU8.buffer, this.memoryPtr, 4096);
+        this.memImageData = this.memCtx.createImageData(64, 64);
+        this.memState = {
+            scale: 0.2,      
+            panning: false,
+            pointX: 50,      
+            pointY: 50,
+            startX: 0,
+            startY: 0,
+            gridSize: 16,
+            cols: 64,
+            rows: 64,
+            selectedAddr: -1
+        };
+        this.memInfoElement = document.getElementById('mem-info');
+
+        this.initMemoryInteraction();
     }
 
     init() {
@@ -128,8 +151,8 @@ ORG 0x500
         let lastTimerUpdate = performance.now();
         let lastInstructionTime = performance.now();
 
-        const timerInterval = 1000 / 120;      
-        const instructionInterval = 1000 / 1000; 
+        const timerInterval = 1000 / 120;
+        const instructionInterval = 1000 / 1000;
 
         const loop = (timestamp) => {
             if (timestamp - lastInstructionTime > 100) {
@@ -143,10 +166,12 @@ ORG 0x500
 
             while (timestamp - lastTimerUpdate >= timerInterval) {
                 this.module._update_timers();
-                lastTimerUpdate += timerInterval; 
+                lastTimerUpdate += timerInterval;
             }
 
             this.render();
+            this.updateDebug();
+            this.drawInteractiveMemory();
 
             requestAnimationFrame(loop);
         };
@@ -180,13 +205,210 @@ ORG 0x500
             currentAddr += 1;
         }
     }
+
+    updateDebug() {
+        for (let i = 0; i < 16; i++) {
+            const val = this.vRegisters[i].toString(16).toUpperCase().padStart(2, '0');
+            if (this.regElements[i].textContent !== val) {
+                this.regElements[i].textContent = val;
+            }
+        }
+        const pc = this.module._get_pc().toString(16).toUpperCase().padStart(3, '0');
+        this.pcElement.textContent = `0x${pc}`;
+    }
+
+    createDebugUI() {
+        const container = document.createElement('div');
+        container.style = "display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; font-family: monospace; font-size: 21px; background: #222; color: #0f0; padding: 10px; margin-top: 10px;";
+
+        for (let i = 0; i < 16; i++) {
+            const regDiv = document.createElement('div');
+            regDiv.innerHTML = `V${i.toString(16).toUpperCase()}: <span id="vreg-${i}">00</span>`;
+            container.appendChild(regDiv);
+            this.regElements[i] = regDiv.querySelector('span');
+        }
+
+        const pcDiv = document.createElement('div');
+        pcDiv.style = "grid-column: span 4; border-top: 1px solid #444; padding-top: 5px;";
+        pcDiv.innerHTML = `PC: <span id="pc-reg">0x000</span>`;
+        container.appendChild(pcDiv);
+        this.pcElement = pcDiv.querySelector('#pc-reg');
+
+        document.body.appendChild(container);
+    }
+
+    drawMemoryMap() {
+        const data = this.memImageData.data;
+        const pc = this.module._get_pc();
+        const indexI = this.module._get_i();
+
+        for (let i = 0; i < 4096; i++) {
+            const val = this.memoryView[i];
+            const dIdx = i * 4;
+
+            data[dIdx] = 0;
+            data[dIdx + 1] = val;
+            data[dIdx + 2] = 0;
+            data[dIdx + 3] = 255;
+
+            if (i === pc || i === pc + 1) {
+                data[dIdx] = 255;
+                data[dIdx + 1] = 0;
+            }
+
+            if (i === indexI) {
+                data[dIdx + 2] = 255;
+                data[dIdx + 1] = 100;
+            }
+        }
+        this.memCtx.putImageData(this.memImageData, 0, 0);
+    }
+
+    updateSelectedAddress(mouseX, mouseY) {
+        const rect = this.memCanvas.getBoundingClientRect();
+        const canvasX = (mouseX - rect.left) * (this.memCanvas.width / rect.width);
+        const canvasY = (mouseY - rect.top) * (this.memCanvas.height / rect.height);
+        const worldX = (canvasX - this.memState.pointX) / this.memState.scale;
+        const worldY = (canvasY - this.memState.pointY) / this.memState.scale;
+
+        const col = Math.floor(worldX / this.memState.gridSize);
+        const row = Math.floor(worldY / this.memState.gridSize);
+
+        if (col >= 0 && col < this.memState.cols && row >= 0 && row < this.memState.rows) {
+            const addr = row * this.memState.cols + col;
+            if (addr < 4096) {
+                this.memState.selectedAddr = addr;
+                this.updateMemInfoDOM(addr); 
+                return;
+            }
+        }
+
+        this.memState.selectedAddr = -1;
+        if (this.memInfoElement) this.memInfoElement.textContent = "Addr: --- | Val: --";
+    }
+
+    initMemoryInteraction() {
+        this.memCanvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const rect = this.memCanvas.getBoundingClientRect();
+            const mouseX = (e.clientX - rect.left) * (this.memCanvas.width / rect.width);
+            const mouseY = (e.clientY - rect.top) * (this.memCanvas.height / rect.height);
+
+            const xs = (mouseX - this.memState.pointX) / this.memState.scale;
+            const ys = (mouseY - this.memState.pointY) / this.memState.scale;
+
+            const delta = -e.deltaY;
+            const factor = delta > 0 ? 1.1 : 0.9;
+            const newScale = Math.max(0.05, Math.min(15, this.memState.scale * factor));
+
+            this.memState.pointX = mouseX - xs * newScale;
+            this.memState.pointY = mouseY - ys * newScale;
+            this.memState.scale = newScale;
+        });
+
+        this.memCanvas.addEventListener('mousedown', (e) => {
+            this.memState.panning = true;
+            const rect = this.memCanvas.getBoundingClientRect();
+            const canvasX = (e.clientX - rect.left) * (this.memCanvas.width / rect.width);
+            const canvasY = (e.clientY - rect.top) * (this.memCanvas.height / rect.height);
+
+            this.memState.startX = canvasX - this.memState.pointX;
+            this.memState.startY = canvasY - this.memState.pointY;
+            this.memCanvas.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            const rect = this.memCanvas.getBoundingClientRect();
+
+            if (this.memState.panning) {
+                const canvasX = (e.clientX - rect.left) * (this.memCanvas.width / rect.width);
+                const canvasY = (e.clientY - rect.top) * (this.memCanvas.height / rect.height);
+                this.memState.pointX = canvasX - this.memState.startX;
+                this.memState.pointY = canvasY - this.memState.startY;
+            } else {
+                this.updateSelectedAddress(e.clientX, e.clientY);
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            this.memState.panning = false;
+            if (this.memCanvas) this.memCanvas.style.cursor = 'crosshair';
+        });
+    }
+
+    updateMemInfoDOM(addr) {
+        if (!this.memInfoElement) return;
+        const val = this.memoryView[addr];
+        const hexAddr = addr.toString(16).toUpperCase().padStart(3, '0');
+        const hexVal = val.toString(16).toUpperCase().padStart(2, '0');
+        this.memInfoElement.textContent = `Addr: 0x${hexAddr} | Val: 0x${hexVal} (${val})`;
+    }
+
+    drawInteractiveMemory() {
+        if (!this.memCtx) return;
+
+        const ctx = this.memCtx;
+        const s = this.memState;
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = '#111';
+        ctx.fillRect(0, 0, this.memCanvas.width, this.memCanvas.height);
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(s.pointX, s.pointY);
+        ctx.scale(s.scale, s.scale);
+
+        const pc = this.module._get_pc();
+        const regI = this.module._get_i();
+        const gs = s.gridSize;
+
+        for (let row = 0; row < s.rows; row++) {
+            for (let col = 0; col < s.cols; col++) {
+                const addr = row * s.cols + col;
+                if (addr >= 4096) break;
+
+                const val = this.memoryView[addr];
+                const x = col * gs;
+                const y = row * gs;
+
+                if (val === 0) {
+                    ctx.fillStyle = 'rgba(30, 30, 30, 0.5)';
+                } else {
+                    const brightness = Math.min(255, 50 + val * 0.8);
+                    ctx.fillStyle = `rgb(0, ${brightness}, 50)`;
+                }
+                if (addr < 0x200) {
+                    ctx.fillStyle = val === 0 ? 'rgba(20, 30, 50, 0.5)' : `rgb(0, 100, ${50 + val * 0.5})`;
+                }
+
+                ctx.fillRect(x, y, gs - 1, gs - 1);
+                if (addr === pc || addr === pc + 1) {
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#f00';
+                    ctx.strokeRect(x + 1, y + 1, gs - 3, gs - 3);
+                }
+                if (addr === regI) {
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#ff0';
+                    ctx.strokeRect(x + 1, y + 1, gs - 3, gs - 3);
+                }
+                if (addr === s.selectedAddr) {
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#fff';
+                    ctx.strokeRect(x, y, gs - 1, gs - 1);
+                }
+            }
+        }
+        ctx.restore();
+    }
 }
 
-createChip8().then(Module => {
-    const canvas = document.getElementById('display');
-    const emu = new Chip8Emulator(canvas, Module);
-    emu.start();
-
-    const status = document.getElementById('status');
-    if (status) status.parentElement.remove();
+window.addEventListener('DOMContentLoaded', () => {
+    createChip8().then(Module => {
+        const canvas = document.getElementById('display');
+        const emu = new Chip8Emulator(canvas, Module);
+        emu.start();
+    });
 });
