@@ -27,9 +27,9 @@ class Chip8Emulator {
         this.memoryView = new Uint8Array(this.module.HEAPU8.buffer, this.memoryPtr, 4096);
         this.memImageData = this.memCtx.createImageData(64, 64);
         this.memState = {
-            scale: 0.2,      
+            scale: 0.2,
             panning: false,
-            pointX: 50,      
+            pointX: 50,
             pointY: 50,
             startX: 0,
             startY: 0,
@@ -278,7 +278,7 @@ ORG 0x500
             const addr = row * this.memState.cols + col;
             if (addr < 4096) {
                 this.memState.selectedAddr = addr;
-                this.updateMemInfoDOM(addr); 
+                this.updateMemInfoDOM(addr);
                 return;
             }
         }
@@ -288,6 +288,13 @@ ORG 0x500
     }
 
     initMemoryInteraction() {
+        const clampBounds = () => {
+            const limitX = this.memCanvas.width;
+            const limitY = this.memCanvas.height;
+            this.memState.pointX = Math.max(-limitX, Math.min(limitX, this.memState.pointX));
+            this.memState.pointY = Math.max(-limitY, Math.min(limitY, this.memState.pointY));
+        };
+
         this.memCanvas.addEventListener('wheel', (e) => {
             e.preventDefault();
             const rect = this.memCanvas.getBoundingClientRect();
@@ -304,6 +311,8 @@ ORG 0x500
             this.memState.pointX = mouseX - xs * newScale;
             this.memState.pointY = mouseY - ys * newScale;
             this.memState.scale = newScale;
+
+            clampBounds();
         });
 
         this.memCanvas.addEventListener('mousedown', (e) => {
@@ -323,8 +332,11 @@ ORG 0x500
             if (this.memState.panning) {
                 const canvasX = (e.clientX - rect.left) * (this.memCanvas.width / rect.width);
                 const canvasY = (e.clientY - rect.top) * (this.memCanvas.height / rect.height);
+
                 this.memState.pointX = canvasX - this.memState.startX;
                 this.memState.pointY = canvasY - this.memState.startY;
+
+                clampBounds();
             } else {
                 this.updateSelectedAddress(e.clientX, e.clientY);
             }
