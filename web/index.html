@@ -10,11 +10,26 @@
 
 <body>
     <h1>CHIP-8 WASM</h1>
-    <canvas id="display" width="64" height="32"></canvas>
-    <canvas id="memory-map-canvas" style="border: 1px solid #555; image-rendering: pixelated;"></canvas>
-    <div id="mem-info"
-        style="font-family: monospace; background: #222; color: #0f0; padding: 10px; margin-top: 5px; border: 1px solid #444; min-height: 1.2em;">
-        Addr: 0x000 | Val: 0x00 (0)
+    <div id="app-grid">
+        <div id="screens-row">
+            <div id="display-panel">
+                <canvas id="display" width="64" height="32"></canvas>
+            </div>
+            <div id="memory-panel">
+                <canvas id="memory-map-canvas"></canvas>
+                <div id="mem-info">Addr: 0x000 | Val: 0x00 (0)</div>
+            </div>
+        </div>
+        <div id="tools-row">
+            <div id="debug-panel"></div>
+            <div id="editor-container">
+            <div class="editor-wrapper">
+                <div id="line-numbers"></div>
+                <textarea id="asm-editor" spellcheck="false"></textarea>
+            </div>
+            <button id="run-button">Compile & Run</button>
+        </div>
+        </div>
     </div>
     <script src="./js/chip8.js"></script>
     <script type="module" src="./js/asm.js"></script>

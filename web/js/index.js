@@ -219,7 +219,7 @@ ORG 0x500
 
     createDebugUI() {
         const container = document.createElement('div');
-        container.style = "display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; font-family: monospace; font-size: 21px; background: #222; color: #0f0; padding: 10px; margin-top: 10px;";
+        container.classList.add('debug-container');
 
         for (let i = 0; i < 16; i++) {
             const regDiv = document.createElement('div');
@@ -229,12 +229,17 @@ ORG 0x500
         }
 
         const pcDiv = document.createElement('div');
-        pcDiv.style = "grid-column: span 4; border-top: 1px solid #444; padding-top: 5px;";
+        pcDiv.classList.add('pc-row');
         pcDiv.innerHTML = `PC: <span id="pc-reg">0x000</span>`;
         container.appendChild(pcDiv);
         this.pcElement = pcDiv.querySelector('#pc-reg');
 
-        document.body.appendChild(container);
+        const debugPanel = document.getElementById('debug-panel');
+        if (debugPanel) {
+            debugPanel.appendChild(container);
+        } else {
+            document.body.appendChild(container);
+        }
     }
 
     drawMemoryMap() {
@@ -323,7 +328,7 @@ ORG 0x500
 
             this.memState.startX = canvasX - this.memState.pointX;
             this.memState.startY = canvasY - this.memState.pointY;
-            this.memCanvas.style.cursor = 'grabbing';
+            this.memCanvas.classList.add('panning');
         });
 
         window.addEventListener('mousemove', (e) => {
@@ -344,7 +349,7 @@ ORG 0x500
 
         window.addEventListener('mouseup', () => {
             this.memState.panning = false;
-            if (this.memCanvas) this.memCanvas.style.cursor = 'crosshair';
+            if (this.memCanvas) this.memCanvas.classList.remove('panning');
         });
     }
 
@@ -415,12 +420,101 @@ ORG 0x500
         }
         ctx.restore();
     }
+
+    reset() {
+        this.module._init();
+        this.ctx.fillStyle = 'black';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    runAsm(code) {
+        try {
+            this.reset();
+            this.loadBin(code);
+            console.log("Code loaded successfully!");
+        } catch (e) {
+            console.error("Assembler Error:", e);
+        }
+    }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
     createChip8().then(Module => {
         const canvas = document.getElementById('display');
         const emu = new Chip8Emulator(canvas, Module);
+        
+        const editor = document.getElementById('asm-editor');
+        const lineNumbers = document.getElementById('line-numbers');
+        const runButton = document.getElementById('run-button');
+
+        const updateLineNumbers = () => {
+            if (!lineNumbers || !editor) return;
+            const lines = editor.value.split('\n').length;
+            lineNumbers.innerHTML = Array.from({ length: lines }, (_, index) => index + 1).join('<br>');
+        };
+
+        editor.addEventListener('input', updateLineNumbers);
+        editor.addEventListener('scroll', () => {
+            if (lineNumbers) lineNumbers.scrollTop = editor.scrollTop;
+        });
+
+        updateLineNumbers();
+
+//         const defaultCode = `
+// ORG 0x200
+//     LD V0, 0x10      
+//     LD V1, 0x10      
+//     LD V2, 0x01
+//     LD V3, 0xFF
+//     LD I, 0x500     
+
+//     DRW V0, V1, 0x5
+
+// MAIN:
+//     DRW V0, V1, 0x5
+
+//     LD V5, 0x05
+//     SKNP V5
+//     ADD V1, V3  
+
+//     LD V5, 0x08
+//     SKNP V5
+//     ADD V1, V2
+
+//     LD V5, 0x07
+//     SKNP V5
+//     ADD V0, V3
+
+//     LD V5, 0x09
+//     SKNP V5
+//     ADD V0, V2
+
+//     DRW V0, V1, 0x5
+
+//     LD V4, 0x01
+//     LD DT, V4
+// SYNC:
+//     LD V4, DT
+//     SE V4, 0x0
+//     JP SYNC
+
+//     JP MAIN
+
+// ORG 0x500
+//     DB 0x20 
+//     DB 0x70 
+//     DB 0xF8 
+//     DB 0x70 
+//     DB 0x20
+// `;
+
+//         editor.value = defaultCode;
+
+        runButton.addEventListener('click', () => {
+            const code = editor.value;
+            emu.runAsm(code);
+        });
+
         emu.start();
     });
 });
