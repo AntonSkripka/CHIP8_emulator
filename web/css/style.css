@@ -102,10 +102,57 @@ body {
 }
 
 .editor-wrapper {
+    position: relative;
     display: flex;
     background: #000;
     height: 450px;
     overflow: hidden;
+}
+
+#asm-highlight {
+    position: absolute;
+    inset: 0 0 0 48px;
+    padding: 10px;
+    pointer-events: none;
+    white-space: pre;
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 20px;
+    color: #fff;
+    overflow: auto;
+    scrollbar-width: none;
+    z-index: 99;
+}
+
+#asm-highlight::-webkit-scrollbar {
+    display: none;
+}
+
+#line-numbers {
+    position: relative;
+    z-index: 2;
+    overflow: auto;
+    scrollbar-width: none;
+}
+
+#line-numbers::-webkit-scrollbar {
+    display: none;
+}
+
+#asm-editor {
+    background: transparent;
+    color: #0f0;
+    caret-color: #0f0;
+    position: relative;
+    z-index: 3;
+}
+
+.keyword {
+    color: #6cf;
+}
+
+.register {
+    color: #0f0;
 }
 
 #line-numbers {
@@ -125,8 +172,10 @@ body {
 
 #asm-editor {
     flex: 1;
-    background: #000;
-    color: #0f0;
+    background: transparent;
+    color: transparent;
+    text-shadow: 0 0 0 #0f0;
+    caret-color: #0f0;
     font-family: monospace;
     font-size: 14px;
     line-height: 20px;
@@ -157,6 +206,7 @@ body {
 
 #run-button {
     position: absolute;
+    z-index: 999;
     top: 21px;
     right: 34px;
     padding: 10px 18px;

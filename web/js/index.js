@@ -1,4 +1,4 @@
-import { asmToBin } from './asm.js';
+import { asmToBin, highlightCode } from './asm.js';
 
 const KEY_MAP = {
     'Digit1': 0x1, 'Digit2': 0x2, 'Digit3': 0x3, 'Digit4': 0xC,
@@ -444,6 +444,7 @@ window.addEventListener('DOMContentLoaded', () => {
         const emu = new Chip8Emulator(canvas, Module);
         
         const editor = document.getElementById('asm-editor');
+        const highlightOverlay = document.getElementById('asm-highlight');
         const lineNumbers = document.getElementById('line-numbers');
         const runButton = document.getElementById('run-button');
 
@@ -453,12 +454,89 @@ window.addEventListener('DOMContentLoaded', () => {
             lineNumbers.innerHTML = Array.from({ length: lines }, (_, index) => index + 1).join('<br>');
         };
 
-        editor.addEventListener('input', updateLineNumbers);
-        editor.addEventListener('scroll', () => {
-            if (lineNumbers) lineNumbers.scrollTop = editor.scrollTop;
+        editor.addEventListener('input', () => {
+            updateLineNumbers();
+            updateHighlight();
         });
 
+        const syncHighlightScroll = () => {
+            if (lineNumbers) lineNumbers.scrollTop = editor.scrollTop;
+            if (highlightOverlay) {
+                highlightOverlay.scrollTop = editor.scrollTop;
+                highlightOverlay.scrollLeft = editor.scrollLeft;
+            }
+        };
+
+        editor.addEventListener('scroll', syncHighlightScroll);
+
+        const updateHighlight = () => {
+            if (!highlightOverlay || !editor) return;
+            highlightOverlay.innerHTML = highlightCode(editor.value);
+            syncHighlightScroll();
+        };
+
         updateLineNumbers();
+        updateHighlight();
+
+        function debugSyncTest() {
+            const totalLines = 100;
+            const markerLine = 50;
+            const content = Array.from({ length: totalLines }, (_, i) => `LD V0, ${i + 1}`).join('\n');
+
+            editor.value = content;
+            updateLineNumbers();
+            updateHighlight();
+
+            const textScrollHeight = editor.scrollHeight;
+            const highlightScrollHeight = highlightOverlay.scrollHeight;
+            const lineNumbersScrollHeight = lineNumbers.scrollHeight;
+
+            if (Math.abs(textScrollHeight - highlightScrollHeight) >= 1) {
+                console.error('ScrollHeight mismatch: textarea=', textScrollHeight, 'highlight=', highlightScrollHeight);
+            }
+            if (Math.abs(textScrollHeight - lineNumbersScrollHeight) >= 1) {
+                console.error('ScrollHeight mismatch: textarea=', textScrollHeight, 'lineNumbers=', lineNumbersScrollHeight);
+            }
+            if (Math.abs(highlightScrollHeight - lineNumbersScrollHeight) >= 1) {
+                console.error('ScrollHeight mismatch: highlight=', highlightScrollHeight, 'lineNumbers=', lineNumbersScrollHeight);
+            }
+
+            editor.scrollTop = editor.scrollHeight;
+            syncHighlightScroll();
+
+            if (highlightOverlay.scrollTop !== editor.scrollTop) {
+                console.error('ScrollTop mismatch: highlightOverlay=', highlightOverlay.scrollTop, 'textarea=', editor.scrollTop);
+            }
+            if (lineNumbers.scrollTop !== editor.scrollTop) {
+                console.error('ScrollTop mismatch: lineNumbers=', lineNumbers.scrollTop, 'textarea=', editor.scrollTop);
+            }
+
+            editor.value = Array.from({ length: totalLines }, (_, i) => {
+                const line = `LD V0, ${i + 1}`;
+                return (i + 1) === markerLine ? `${line} X` : line;
+            }).join('\n');
+            updateLineNumbers();
+            updateHighlight();
+
+            highlightOverlay.innerHTML = highlightOverlay.innerHTML.replace(' X', ' <span class="debug-marker">X</span>');
+
+            const marker = highlightOverlay.querySelector('.debug-marker');
+            if (!marker) {
+                console.error('Debug marker not found in highlight overlay');
+                return;
+            }
+
+            const editorRect = editor.getBoundingClientRect();
+            const markerRect = marker.getBoundingClientRect();
+            const expectedTop = editorRect.top + 10 + (markerLine - 1) * 20 - editor.scrollTop;
+            if (Math.abs(markerRect.top - expectedTop) >= 2) {
+                console.error('Marker alignment mismatch:', markerRect.top, expectedTop);
+            } else {
+                console.log('debugSyncTest passed');
+            }
+        }
+
+        window.debugSyncTest = debugSyncTest;
 
 //         const defaultCode = `
 // ORG 0x200

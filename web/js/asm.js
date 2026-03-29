@@ -1,12 +1,10 @@
 const commandTable = {
     'CLS': 0x00E0,
     'RET': 0x00EE,
-    'JP': [0x1000, 0xB000],
+    'JP': 0x1000,
     'CALL': 0x2000,
-    'SE': [0x3000, 0x5000],
-    'SNE': [0x4000, 0x9000],
-    'LD': [0x6000, 0x8000, 0xA000, 0xF007, 0xF00A, 0xF015, 0xF018, 0xF029, 0xF033, 0xF055, 0xF065],
-    'ADD': [0x7000, 0x8004, 0xF01E],
+    'SE': 0x3000,
+    'SNE': 0x4000,
     'OR': 0x8001,
     'AND': 0x8002,
     'XOR': 0x8003,
@@ -17,237 +15,219 @@ const commandTable = {
     'RND': 0xC000,
     'DRW': 0xD000,
     'SKP': 0xE09E,
-    'SKNP': 0xE0A1,
-    'V0': [0x0000, 0x0000],
-    'V1': [0x0100, 0x0010],
-    'V2': [0x0200, 0x0020],
-    'V3': [0x0300, 0x0030],
-    'V4': [0x0400, 0x0040],
-    'V5': [0x0500, 0x0050],
-    'V6': [0x0600, 0x0060],
-    'V7': [0x0700, 0x0070],
-    'V8': [0x0800, 0x0080],
-    'V9': [0x0900, 0x0090],
-    'VA': [0x0A00, 0x00A0],
-    'VB': [0x0B00, 0x00B0],
-    'VC': [0x0C00, 0x00C0],
-    'VD': [0x0D00, 0x00D0],
-    'VE': [0x0E00, 0x00E0],
-    'VF': [0x0F00, 0x00F0]
+    'SKNP': 0xE0A1
 };
 
-let currentAddress = 0x200;
-let labels = {};
+const defaultOrigin = 0x200;
+
+function parseNumber(token) {
+    if (typeof token === 'number') return token;
+    if (typeof token !== 'string') return NaN;
+    const value = token.trim();
+
+    if (/^0x[0-9A-F]+$/i.test(value)) {
+        return parseInt(value, 16);
+    }
+    if (/^\d+$/.test(value)) {
+        return parseInt(value, 10);
+    }
+    return NaN;
+}
+
+function maskNumericValue(value, opcodeBase, tokenIndex) {
+    if (typeof value !== 'number') return value;
+    if (tokenIndex === 0) return value;
+    const highNibble = opcodeBase & 0xF000;
+    if (highNibble === 0x1000 || highNibble === 0x2000 || highNibble === 0xA000 || highNibble === 0xB000) {
+        return value & 0x0FFF;
+    }
+    if (highNibble === 0x3000 || highNibble === 0x4000 || highNibble === 0x6000 || highNibble === 0x7000 || highNibble === 0xC000) {
+        return value & 0x00FF;
+    }
+    if (highNibble === 0xD000) {
+        return value & 0x000F;
+    }
+    return value;
+}
 
 export function asmToBin(code) {
-    let cleanCode = code.replace(/\s*;[^\n\r]*/g, "").replace(/^\s*[\r\n]/gm, "").trim();
-    let cleanCodeArray = cleanCode.replaceAll(",", "").split("\n");
-    cleanCodeArray = cleanCodeArray.map(line => {
-        return line.trim().split(/\s+/);
-    });
-    let codeTokens = [];
-    for (let i = 0; i < cleanCodeArray.length; i++) {
-        if (cleanCodeArray[i][0].endsWith(":")) {
-            labels[cleanCodeArray[i][0].slice(0, -1)] = currentAddress;
-        };
-    }
+    const labels = {};
+    const cleanCode = code.replace(/\r/g, "").replace(/\s*;[^\n\r]*/g, "").trim();
+    const lines = cleanCode.split("\n").map(l => l.trim()).filter(l => l.length > 0);
 
-    for (let i = 0; i < cleanCodeArray.length; i++) {
-        codeTokens.push(cleanCodeArray[i]);
-        if (codeTokens[i][0] == "ORG") {
-            currentAddress = codeTokens[i][1];
-            // codeTokens.splice(i, 1);
+    let currentAddr = defaultOrigin;
+    const instructionLines = [];
+
+    for (const line of lines) {
+        const tokens = line.replaceAll(",", " ").split(/\s+/).filter(Boolean);
+        const cmd = tokens[0].toUpperCase();
+
+        if (cmd.endsWith(':')) {
+            labels[cmd.slice(0, -1)] = currentAddr;
             continue;
-        };
-        if (codeTokens[i][0].endsWith(":")) {
-            labels[codeTokens[i][0].slice(0, -1)] = currentAddress;
-            codeTokens[i] = null;
-            continue;
-        };
-        for (let j = 0; j < codeTokens[i].length; j++) {
-            if (codeTokens[i][j] in labels) {
-                codeTokens[i][j] = labels[codeTokens[i][j]];
-                continue;
-            }
-            if (codeTokens[i][j].startsWith('0x')) {
-                continue;
-            };
-            if (codeTokens[i][j] === 'DB') {
-                continue;
-            };
-            if (codeTokens[i][j] === 'ENDDB') {
-                continue;
-            };
-            if (codeTokens[i][j] === 'F') {
-                codeTokens[i].splice(j, 1);
-                continue;
-            };
-            if (codeTokens[i][j] === 'B') {
-                codeTokens[i].splice(j, 1);
-                continue;
-            };
-            if (codeTokens[i][j] === 'I') {
-                codeTokens[i].splice(j, 1);
-                continue;
-            };
-            if (codeTokens[i][j] === '[I]') {
-                codeTokens[i].splice(j, 1);
-                continue;
-            };
-            if (codeTokens[i][j] === 'LD') {
-                if (codeTokens[i][j + 1] in commandTable) {
-                    if (codeTokens[i][j + 2] in commandTable) {
-                        codeTokens[i][j] = commandTable[codeTokens[i][j]][1];
-                        continue;
-                    } else if (codeTokens[i][j + 2] === 'DT') {
-                        codeTokens[i][j] = commandTable[codeTokens[i][j]][3];
-                        codeTokens[i].splice(j+2, 1);
-                        continue;
-                    } else if (codeTokens[i][j + 2] === '[I]') {
-                        codeTokens[i][j] = commandTable[codeTokens[i][j]][10];
-                        continue;
-                    } else if (codeTokens[i][j + 2] === 'K') {
-                        codeTokens[i][j] = commandTable[codeTokens[i][j]][4];
-                        continue;
-                    }
-                    else {
-                        codeTokens[i][j] = commandTable[codeTokens[i][j]][0];
-                        continue;
-                    }
-                } else if (codeTokens[i][j + 1] === 'I') {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][2];
-
-                    continue;
-                } else if (codeTokens[i][j + 1] === 'DT') {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][5];
-                    codeTokens[i].splice(j+1, 1);
-                    continue;
-                } else if (codeTokens[i][j + 1] === 'ST') {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][6];
-
-                    continue;
-                } else if (codeTokens[i][j + 1] === 'F') {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][7];
-
-                    continue;
-                } else if (codeTokens[i][j + 1] === 'B') {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][8];
-
-                    continue;
-                } else if (codeTokens[i][j + 1] === '[I]') {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][9];
-
-                    continue;
-                }
-            } else if (codeTokens[i][j] === 'ADD') {
-                if (codeTokens[i][j + 1] === 'I') {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][2];
-
-                    continue;
-                } else {
-                    if (codeTokens[i][j + 2] in commandTable) {
-                        codeTokens[i][j] = commandTable[codeTokens[i][j]][1];
-
-                        continue;
-                    } else {
-                        codeTokens[i][j] = commandTable[codeTokens[i][j]][0];
-
-                        continue;
-                    }
-                }
-            } else if (codeTokens[i][j] === 'JP') {
-                if (codeTokens[i][j + 1] in commandTable) {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][1];
-
-                    continue;
-                } else {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][0];
-
-                    continue;
-                }
-            } else if (codeTokens[i][j] === 'SE') {
-                if (codeTokens[i][j + 2] in commandTable) {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][1];
-
-                    continue;
-                } else {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][0];
-
-                    continue;
-                }
-            } else if (codeTokens[i][j] === 'SNE') {
-                if (codeTokens[i][j + 2] in commandTable) {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][0];
-
-                    continue;
-                } else {
-                    codeTokens[i][j] = commandTable[codeTokens[i][j]][1];
-
-                    continue;
-                }
-            }
-            if (codeTokens[i][j].startsWith('V')) {
-                codeTokens[i][j] = commandTable[codeTokens[i][j]][j - 1];
-
-                continue;
-            }
-            codeTokens[i][j] = commandTable[codeTokens[i][j]];
-
         }
-        currentAddress = parseInt(currentAddress) + 0x002;
-    };
-
-    let bin = [];
-    let currentSegment = null;
-
-    const hasUndefined = codeTokens.flat(Infinity).includes(undefined);
-    if (hasUndefined) {
-        console.log(codeTokens);
-        console.log(labels);
-        console.log(`Syntax error`);
-        return null;
-    };
-
-    const tokens = codeTokens.filter(item => item !== null);
-
-    for (let i = 0; i < tokens.length; i++) {
-        const row = tokens[i];
-        const cmd = row[0];
-        const value = row[1];
 
         if (cmd === 'ORG') {
-            if (currentSegment) bin.push(currentSegment);
-            currentSegment = {
-                start: value,
-                bytes: [],
-            };
+            const val = parseNumber(tokens[1]);
+            if (!isNaN(val)) currentAddr = val;
             continue;
         }
 
-        if (!currentSegment) continue;
-
         if (cmd === 'DB') {
-            const vals = Array.isArray(value) ? value : [value];
-            vals.forEach(v => currentSegment.bytes.push({ val: v & 0xFF, size: 1 }));
+            instructionLines.push({ tokens, addr: currentAddr, type: 'DB' });
+            currentAddr += tokens.length - 1;
         } else {
-                let opcode = 0;
-                for (let j = 0; j < row.length; j++) {
-                    let part = parseInt(row[j]);
-
-                    if (!isNaN(part)) {
-                        opcode |= part;
-                    }
-                }
-
-                currentSegment.bytes.push({ val: opcode & 0xFFFF, size: 2 });
+            instructionLines.push({ tokens, addr: currentAddr, type: 'INST' });
+            currentAddr += 2;
         }
     }
 
-    if (currentSegment) bin.push(currentSegment);
+    const segments = [];
+    let currentSegment = null;
 
-    console.log(codeTokens);
-    console.log(labels);
-    console.log(bin);
+    for (const line of instructionLines) {
+        const { tokens, addr, type } = line;
+        
+        if (!currentSegment || addr !== currentSegment.start + getSegmentSize(currentSegment)) {
+            if (currentSegment) segments.push(currentSegment);
+            currentSegment = { start: addr, bytes: [] };
+        }
 
-    return bin;
+        if (type === 'DB') {
+            for (let i = 1; i < tokens.length; i++) {
+                const val = parseNumber(tokens[i]) || 0;
+                currentSegment.bytes.push({ val: val & 0xFF, size: 1 });
+            }
+            continue;
+        }
+
+        const opcode = encodeInstruction(tokens, labels);
+        currentSegment.bytes.push({ val: opcode & 0xFFFF, size: 2 });
+    }
+
+    if (currentSegment) segments.push(currentSegment);
+    return segments;
+}
+
+function getReg(token) {
+    if (!token || !token.startsWith('V')) return null;
+    const hex = token.charAt(1);
+    const val = parseInt(hex, 16);
+    return isNaN(val) ? null : val;
+}
+
+function encodeInstruction(tokens, labels) {
+    const instr = tokens[0].toUpperCase();
+    const arg1 = tokens[1]?.toUpperCase();
+    const arg2 = tokens[2]?.toUpperCase();
+    const arg3 = tokens[3]?.toUpperCase();
+
+    const x = getReg(arg1);
+    const y = getReg(arg2);
+    const n = parseNumber(arg3);
+    const nn = parseNumber(arg2);
+    const addr = labels[arg1] ?? parseNumber(arg1);
+
+    switch (instr) {
+        case 'CLS':
+            return 0x00E0;
+        case 'RET':
+            return 0x00EE;
+        case 'JP':
+            if (arg2) {
+                return 0xB000 | ((labels[arg2] ?? parseNumber(arg2)) & 0x0FFF);
+            }
+            return 0x1000 | (addr & 0x0FFF);
+        case 'CALL':
+            return 0x2000 | ((labels[arg1] ?? parseNumber(arg1)) & 0x0FFF);
+        case 'SE':
+            if (y !== null) return 0x5000 | (x << 8) | (y << 4);
+            return 0x3000 | (x << 8) | (nn & 0xFF);
+        case 'SNE':
+            if (y !== null) return 0x9000 | (x << 8) | (y << 4);
+            return 0x4000 | (x << 8) | (nn & 0xFF);
+        case 'LD':
+            return encodeLD(arg1, arg2, labels);
+        case 'ADD':
+            if (arg1 === 'I') {
+                return 0xF01E | (getReg(arg2) << 8);
+            }
+            if (y !== null) {
+                return 0x8004 | (x << 8) | (y << 4);
+            }
+            return 0x7000 | (x << 8) | (nn & 0xFF);
+        case 'OR':
+            return 0x8001 | (x << 8) | (y << 4);
+        case 'AND':
+            return 0x8002 | (x << 8) | (y << 4);
+        case 'XOR':
+            return 0x8003 | (x << 8) | (y << 4);
+        case 'SUB':
+            return 0x8005 | (x << 8) | (y << 4);
+        case 'SHR':
+            return 0x8006 | (x << 8);
+        case 'SUBN':
+            return 0x8007 | (x << 8) | (y << 4);
+        case 'SHL':
+            return 0x800E | (x << 8);
+        case 'RND':
+            return 0xC000 | (x << 8) | (nn & 0xFF);
+        case 'DRW':
+            return 0xD000 | (x << 8) | (y << 4) | (parseNumber(arg3) & 0xF);
+        case 'SKP':
+            return 0xE09E | (x << 8);
+        case 'SKNP':
+            return 0xE0A1 | (x << 8);
+        default:
+            return 0;
+    }
+}
+
+function encodeLD(arg1, arg2, labels) {
+    if (arg1 === 'I') return 0xA000 | ( (labels[arg2] ?? parseNumber(arg2)) & 0x0FFF);
+    if (arg1 === 'DT') return 0xF015 | (getReg(arg2) << 8);
+    if (arg1 === 'ST') return 0xF018 | (getReg(arg2) << 8);
+    if (arg1 === 'F')  return 0xF029 | (getReg(arg2) << 8);
+    if (arg1 === 'B')  return 0xF033 | (getReg(arg2) << 8);
+    if (arg1 === '[I]') return 0xF055 | (getReg(arg2) << 8);
+
+    const r1 = getReg(arg1);
+    if (arg2 === 'DT') return 0xF007 | (r1 << 8);
+    if (arg2 === 'K')  return 0xF00A | (r1 << 8);
+    if (arg2 === '[I]') return 0xF065 | (r1 << 8);
+    
+    const r2 = getReg(arg2);
+    if (r2 !== null) return 0x8000 | (r1 << 8) | (r2 << 4);
+    
+    return 0x6000 | (r1 << 8) | (parseNumber(arg2) & 0xFF);
+}
+
+function getSegmentSize(seg) {
+    return seg.bytes.reduce((acc, b) => acc + b.size, 0);
+}
+
+function escapeHtml(text) {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+export function highlightCode(text) {
+    const keywords = [
+        'CLS', 'RET', 'JP', 'CALL', 'SE', 'SNE', 'LD', 'ADD', 'OR', 'AND', 'XOR', 'SUB', 'SHR', 'SUBN', 'SHL', 'RND', 'DRW', 'SKP', 'SKNP', 'DB', 'ORG'
+    ];
+    const registers = [
+        'V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'VA', 'VB', 'VC', 'VD', 'VE', 'VF', 'I', 'DT', 'ST'
+    ];
+    const escaped = escapeHtml(text);
+    const regex = new RegExp(`\\b(${[...keywords, ...registers].join('|')})\\b`, 'gi');
+
+    return escaped.replace(regex, match => {
+        const upper = match.toUpperCase();
+        if (keywords.includes(upper)) {
+            return `<span class="keyword">${match}</span>`;
+        }
+        if (registers.includes(upper)) {
+            return `<span class="register">${match}</span>`;
+        }
+        return match;
+    });
 }
