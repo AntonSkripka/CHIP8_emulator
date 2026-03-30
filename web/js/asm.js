@@ -174,12 +174,22 @@ function encodeInstruction(tokens, labels) {
             return 0x800E | (x << 8);
         case 'RND':
             return 0xC000 | (x << 8) | (nn & 0xFF);
-            case 'DRW':
+        case 'DRW':
             return 0xD000 | (x << 8) | (y << 4) | (parseNumber(arg3) & 0xF);
         case 'PUSH':
             return 0x5000 | (x << 8) | 0x01;
         case 'POP':
             return 0x5000 | (x << 8) | 0x02;
+        case 'PUSHA':
+            return 0x5000 | 0x03;
+        case 'POPA':
+            return 0x5000 | 0x04;
+        case 'PEAK':
+            return 0x5000 | (x << 8) | 0x05;
+        case 'SIZESTACK':
+            return 0x5000 | (x << 8) | 0x06;
+        case 'CLEARSTACK':
+            return 0x5000 | 0x07;
         case 'SKP':
             return 0xE09E | (x << 8);
         case 'SKNP':
@@ -219,7 +229,8 @@ function escapeHtml(text) {
 export function highlightCode(text) {
     const keywords = [
         'CLS', 'RET', 'JP', 'CALL', 'SE', 'SNE', 'LD', 'ADD', 'OR', 'AND', 'XOR', 
-        'SUB', 'SHR', 'SUBN', 'SHL', 'RND', 'DRW', 'PUSH', 'POP', 'SKP', 'SKNP', 'DB', 'ORG'
+        'SUB', 'SHR', 'SUBN', 'SHL', 'RND', 'DRW', 'PUSH', 'POP', 'SKP', 'SKNP', 'DB', 'ORG',
+        'PUSHA', 'POPA', 'SIZESTACK', 'PEAK', 'CLEARSTACK'
     ];
     const registers = [
         'V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 

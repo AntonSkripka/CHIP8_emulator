@@ -112,6 +112,16 @@ void step()
             stack_push(x);
         } else if (kk == 0x02) {
             stack_pop(x);
+        } else if (kk == 0x03) {
+            stack_pusha();
+        } else if (kk == 0x04) {
+            stack_popa();
+        } else if (kk == 0x05) {
+            stack_peak(x);
+        } else if (kk == 0x06) {
+            stack_size(x);
+        } else if (kk == 0x07) {
+            stack_clear();
         } else if (instance.V[x] == instance.V[y]) {
             instance.pc += 2;
         }
