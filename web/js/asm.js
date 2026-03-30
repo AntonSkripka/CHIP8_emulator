@@ -5,6 +5,8 @@ const commandTable = {
     'CALL': 0x2000,
     'SE': 0x3000,
     'SNE': 0x4000,
+    'PUSH': 0x5001,
+    'POP': 0x5002,
     'OR': 0x8001,
     'AND': 0x8002,
     'XOR': 0x8003,
@@ -172,8 +174,12 @@ function encodeInstruction(tokens, labels) {
             return 0x800E | (x << 8);
         case 'RND':
             return 0xC000 | (x << 8) | (nn & 0xFF);
-        case 'DRW':
+            case 'DRW':
             return 0xD000 | (x << 8) | (y << 4) | (parseNumber(arg3) & 0xF);
+        case 'PUSH':
+            return 0x5000 | (x << 8) | 0x01;
+        case 'POP':
+            return 0x5000 | (x << 8) | 0x02;
         case 'SKP':
             return 0xE09E | (x << 8);
         case 'SKNP':
@@ -212,15 +218,19 @@ function escapeHtml(text) {
 
 export function highlightCode(text) {
     const keywords = [
-        'CLS', 'RET', 'JP', 'CALL', 'SE', 'SNE', 'LD', 'ADD', 'OR', 'AND', 'XOR', 'SUB', 'SHR', 'SUBN', 'SHL', 'RND', 'DRW', 'SKP', 'SKNP', 'DB', 'ORG'
+        'CLS', 'RET', 'JP', 'CALL', 'SE', 'SNE', 'LD', 'ADD', 'OR', 'AND', 'XOR', 
+        'SUB', 'SHR', 'SUBN', 'SHL', 'RND', 'DRW', 'PUSH', 'POP', 'SKP', 'SKNP', 'DB', 'ORG'
     ];
     const registers = [
-        'V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'VA', 'VB', 'VC', 'VD', 'VE', 'VF', 'I', 'DT', 'ST'
+        'V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 
+        'VA', 'VB', 'VC', 'VD', 'VE', 'VF', 'I', 'DT', 'ST'
     ];
-    const escaped = escapeHtml(text);
+
+    let escaped = escapeHtml(text);
+
     const regex = new RegExp(`\\b(${[...keywords, ...registers].join('|')})\\b`, 'gi');
 
-    return escaped.replace(regex, match => {
+    let highlighted = escaped.replace(regex, match => {
         const upper = match.toUpperCase();
         if (keywords.includes(upper)) {
             return `<span class="keyword">${match}</span>`;
@@ -230,4 +240,10 @@ export function highlightCode(text) {
         }
         return match;
     });
+
+    if (text.endsWith('\n')) {
+        highlighted += ' ';
+    }
+
+    return highlighted;
 }

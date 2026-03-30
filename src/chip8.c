@@ -1,5 +1,7 @@
 #include "chip8.h"
+#include "stack.h"
 #include <emscripten.h>
+#include <stdlib.h>
 #include <string.h>
 
 Chip8 instance;
@@ -105,7 +107,15 @@ void step()
 
     case 0x3000: if (instance.V[x] == kk) instance.pc += 2; break;
     case 0x4000: if (instance.V[x] != kk) instance.pc += 2; break;
-    case 0x5000: if (instance.V[x] == instance.V[y]) instance.pc += 2; break;
+    case 0x5000:
+        if (kk == 0x01) {
+            stack_push(x);
+        } else if (kk == 0x02) {
+            stack_pop(x);
+        } else if (instance.V[x] == instance.V[y]) {
+            instance.pc += 2;
+        }
+        break;
     case 0x6000: instance.V[x] = kk; break;
     case 0x7000: instance.V[x] += kk; break;
 
@@ -195,3 +205,4 @@ EMSCRIPTEN_KEEPALIVE bool get_draw_flag() { return instance.draw_flag; }
 EMSCRIPTEN_KEEPALIVE void clear_draw_flag() { instance.draw_flag = false; }
 EMSCRIPTEN_KEEPALIVE void* get_mem_ptr() { return instance.memory; }
 EMSCRIPTEN_KEEPALIVE uint16_t get_i() { return instance.I; }
+EMSCRIPTEN_KEEPALIVE uint8_t get_call_stack_ptr() { return instance.sp; }
