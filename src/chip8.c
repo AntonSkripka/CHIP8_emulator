@@ -1,5 +1,6 @@
 #include "chip8.h"
 #include "stack.h"
+#include "math_core.h"
 #include <emscripten.h>
 #include <stdlib.h>
 #include <string.h>
@@ -157,6 +158,10 @@ void step()
                 instance.V[0xF] = (instance.V[x] >> 7) & 0x1;
                 instance.V[x] <<= 1;
                 break;
+
+            case 0x9: math_mul(x, y); break;
+            case 0xA: math_div(x, y); break;
+            case 0xB: math_rem(x, y); break;
         }
         break;
 

@@ -1,3 +1,6 @@
+#ifndef CHIP8_H
+#define CHIP8_H
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -24,3 +27,5 @@ typedef struct {
     
     bool draw_flag;                   
 } Chip8;
+
+#endif

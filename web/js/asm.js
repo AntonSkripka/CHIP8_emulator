@@ -190,6 +190,12 @@ function encodeInstruction(tokens, labels) {
             return 0x5000 | (x << 8) | 0x06;
         case 'CLEARSTACK':
             return 0x5000 | 0x07;
+        case 'MUL':
+            return 0x8000 | (x << 8) | (y << 4) | 0x9;
+        case 'DIV':
+            return 0x8000 | (x << 8) | (y << 4) | 0xA;
+        case 'REM':
+            return 0x8000 | (x << 8) | (y << 4) | 0xB;
         case 'SKP':
             return 0xE09E | (x << 8);
         case 'SKNP':
@@ -230,7 +236,7 @@ export function highlightCode(text) {
     const keywords = [
         'CLS', 'RET', 'JP', 'CALL', 'SE', 'SNE', 'LD', 'ADD', 'OR', 'AND', 'XOR', 
         'SUB', 'SHR', 'SUBN', 'SHL', 'RND', 'DRW', 'PUSH', 'POP', 'SKP', 'SKNP', 'DB', 'ORG',
-        'PUSHA', 'POPA', 'SIZESTACK', 'PEAK', 'CLEARSTACK'
+        'PUSHA', 'POPA', 'SIZESTACK', 'PEAK', 'CLEARSTACK', 'MUL', 'DIV', 'REM'
     ];
     const registers = [
         'V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 
