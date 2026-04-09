@@ -32,6 +32,7 @@ body {
     display: flex;
     gap: 10px;
     align-items: stretch;
+    margin-bottom: 140px;
 }
 
 #display-panel,
@@ -341,5 +342,88 @@ body {
     #memory-map-canvas {
         width: 100%;
         height: auto;
+    }
+}
+
+#drop-zone {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(to top, #0a0a0a, #111);
+    border-top: 2px solid #0f0;
+    border-bottom: 2px solid #0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+#drop-zone:hover {
+    border-color: #0f0;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3) inset;
+}
+
+#drop-zone.dragover {
+    border-color: #0ff;
+    background: linear-gradient(to top, #0a1a1a, #1a2a2a);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5) inset;
+}
+
+#drop-zone.dragover #drop-zone-title {
+    color: #0ff;
+    text-shadow: 0 0 10px #0ff;
+}
+
+#drop-zone-content {
+    text-align: center;
+    font-family: monospace;
+    color: #0f0;
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    user-select: none;
+}
+
+#drop-zone-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    transition: all 0.2s ease;
+}
+
+#drop-zone-hint {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+#drop-zone-status {
+    font-size: 11px;
+    color: #666;
+    min-height: 14px;
+}
+
+#drop-zone-status.loading {
+    color: #0f0;
+    animation: blink 0.6s infinite;
+}
+
+#drop-zone-status.success {
+    color: #0f0;
+}
+
+#drop-zone-status.error {
+    color: #f00;
+}
+
+@keyframes blink {
+    0%, 49%, 100% {
+        opacity: 1;
+    }
+    50%, 99% {
+        opacity: 0.3;
     }
 }

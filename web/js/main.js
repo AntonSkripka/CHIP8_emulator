@@ -1,6 +1,7 @@
 import { Chip8Emulator } from './index.js';
 import { KeyboardInput } from './keyboard.js';
 import { EditorManager } from './editor_manager.js';
+import { initializeDropZone } from './drop_zone.js';
 
 window.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('app-grid')) return;
@@ -26,6 +27,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 emu.runAsm(code);
             });
         }
+
+        initializeDropZone(emu);
 
         emu.start();
     });

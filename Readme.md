@@ -51,7 +51,7 @@ This project is evolving from a simple WASM core to a full-featured development 
 - [x] **Memory Monitor:** Real-time visualization of the 4KB RAM and V-registers.
 
 ### Phase 3: Game Engine & Compatibility
-- [ ] **ROM Loader:** Drag-and-drop support for `.ch8` files.
+- [x] **ROM Loader:** Drag-and-drop support for `.ch8` files.
 - [ ] **Compatibility Layer:** Support for SCHIP (Super-CHIP) and XO-CHIP extensions for high-res graphics.
 
 ### Phase 4: CHIP-OS
