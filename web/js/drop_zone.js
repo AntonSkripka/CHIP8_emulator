@@ -1,6 +1,9 @@
 export class DropZoneManager {
-    constructor(emulator) {
+    constructor(emulator, virtualDisk, onDiskUpdated = null) {
         this.emulator = emulator;
+        this.disk = virtualDisk;
+        this.onDiskUpdated = onDiskUpdated;
+        
         this.dropZone = document.getElementById('drop-zone');
         this.fileInput = document.getElementById('file-input');
         this.statusElement = document.getElementById('drop-zone-status');
@@ -82,11 +85,21 @@ export class DropZoneManager {
             try {
                 const buffer = event.target.result;
                 const uint8Array = new Uint8Array(buffer);
+                const isSaved = this.disk.writeFile(file.name, uint8Array);
+                
+                if (!isSaved) {
+                    this.showStatus('✗ VFS Write Failed (No Space?)', 'error');
+                    return;
+                }
 
                 this.emulator.reset();
                 this.emulator.loadch(uint8Array);
 
-                this.showStatus(`✓ Loaded: ${file.name}`, 'success');
+                this.showStatus(`✓ Saved & Loaded: ${file.name}`, 'success');
+
+                if (typeof this.onDiskUpdated === 'function') {
+                    this.onDiskUpdated();
+                }
             } catch (error) {
                 console.error('Error loading ROM:', error);
                 this.showStatus('✗ Load failed', 'error');
@@ -117,6 +130,6 @@ export class DropZoneManager {
     }
 }
 
-export function initializeDropZone(emulator) {
-    return new DropZoneManager(emulator);
+export function initializeDropZone(emulator, virtualDisk, onDiskUpdated) {
+    return new DropZoneManager(emulator, virtualDisk, onDiskUpdated);
 }

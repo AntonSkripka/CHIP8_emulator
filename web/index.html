@@ -27,13 +27,24 @@
                 <div id="stack-container"></div>
             </div>
             <div id="editor-container">
-            <div class="editor-wrapper">
-                <div id="line-numbers"></div>
-                <div id="asm-highlight"></div>
-                <textarea id="asm-editor" spellcheck="false"></textarea>
+                <div class="editor-controls">
+                    <input type="text" id="asm-filename" value="project.asm" placeholder="Name..."
+                        spellcheck="false">
+                    <button id="save-button">Save to Disk</button>
+                </div>
+                <div class="editor-wrapper">
+                    <div id="line-numbers"></div>
+                    <div id="asm-highlight"></div>
+                    <textarea id="asm-editor" spellcheck="false"></textarea>
+                </div>
+                <button id="run-button">Compile & Run</button>
             </div>
-            <button id="run-button">Compile & Run</button>
         </div>
+
+        <div id="disk-panel">
+            <div class="panel-header">VIRTUAL DISK 1MB</div>
+            <ul id="file-list">
+            </ul>
         </div>
     </div>
     <div id="drop-zone">
