@@ -52,7 +52,7 @@ This will compile the source assets and update the optimized binary core at `web
 
 ### Phase 3: Storage & File Systems
 - [x] **C-Based VFS:** Custom Virtual File System and FAT layer running inside the WebAssembly instance.
-- [x] **Disk UI:** Graphical browser interface managing the compiled `virtual_disk` layer via LocalStorage.
+- [x] **Disk UI:** Graphical browser interface managing the compiled `virtual_disk` layer via IndexedDB.
 
 ### Phase 4: Compatibility & Extensions
 - [ ] **Extended Instruction Sets:** Support for SCHIP (Super-CHIP) and XO-CHIP high-resolution graphics.
