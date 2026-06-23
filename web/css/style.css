@@ -588,3 +588,81 @@ body {
     font-style: italic;
     font-size: 14px;
 }
+
+#info-banner-ua {
+    width: min(1320px, 100%);
+    background: #0d0d0d;
+    border: 1px solid #00ff00;
+    padding: 20px;
+    margin-bottom: 25px;
+    border-radius: 6px;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.05), inset 0 0 10px rgba(0, 255, 0, 0.02);
+}
+
+#info-banner-ua .banner-header {
+    color: #000;
+    background: #0f0;
+    display: inline-block;
+    padding: 4px 12px;
+    font-weight: bold;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    margin-bottom: 18px;
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+}
+
+#info-banner-ua .banner-body {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #a0ffa0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#info-banner-ua .banner-section {
+    border-bottom: 1px solid #222;
+    padding-bottom: 14px;
+}
+
+#info-banner-ua .banner-grid-desc {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    border-bottom: 1px solid #222;
+    padding-bottom: 14px;
+}
+
+#info-banner-ua .desc-item {
+    background: #050505;
+    border: 1px solid #1a1a1a;
+    padding: 12px;
+    border-radius: 4px;
+}
+
+#info-banner-ua .banner-footer-hint {
+    background: rgba(0, 255, 0, 0.03);
+    border-left: 3px solid #0f0;
+    padding: 8px 12px;
+    color: #00ff00;
+}
+
+#info-banner-ua strong {
+    color: #fff;
+    text-shadow: 0 0 6px rgba(0, 255, 0, 0.6);
+}
+
+#info-banner-ua em {
+    color: #8af;
+    font-style: normal;
+    text-shadow: 0 0 4px rgba(136, 170, 255, 0.4);
+}
+
+/* Адаптивність для малих екранів */
+@media (max-width: 900px) {
+    #info-banner-ua .banner-grid-desc {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
