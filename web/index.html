@@ -9,30 +9,30 @@
 </head>
 
 <body>
-    <div id="info-banner-ua">
-        <div class="banner-header">СИСТЕМНА СПЕЦИФІКАЦІЯ ТА ІНСТРУКЦІЯ ЕКОСИСТЕМИ</div>
+    <div id="info-banner">
+        <div class="banner-header">SYSTEM SPECIFICATION AND USER GUIDE</div>
         <div class="banner-body">
             <div class="banner-section">
-                <strong>Про проєкт:</strong> Це повноцінне низькорівневе середовище розробки та емуляції архітектури CHIP-8. Серце системи — високопродуктивне інтерпретуюче ядро процесора та віртуальна файлова система (VFS), які написані на мові <strong>C</strong> і трансльовані за допомогою Emscripten у бінарний код <strong>WebAssembly (WASM)</strong>. Це забезпечує нативну швидкість виконання інструкцій (60 FPS) та прямий доступ до пам'яті через JavaScript-буфер `Uint8ClampedArray`.
+                <strong>About the project:</strong> A complete low-level development and emulation environment for the CHIP-8 architecture. Its core is a high-performance CPU interpreter and virtual file system (VFS), written in <strong>C</strong> and compiled by Emscripten to <strong>WebAssembly (WASM)</strong>. This enables fast instruction execution at 60 FPS and direct memory access through a JavaScript `Uint8ClampedArray`.
             </div>
             
             <div class="banner-grid-desc">
                 <div class="desc-item">
-                    <strong>Моніторинг та Дисплей:</strong> Ліва панель містить оригінальний двоколірний екран (64x32 пікселів) із попіксельним рендерингом (pixel-accurate). Поруч із ним розташована жива <strong>Карта пам'яті (Memory Map)</strong>, яка візуалізує всі 4096 байт RAM процесора. Ви можете наводити курсор для зчитування адреси (Addr) та поточних значень (Val) у реальному часі.
+                    <strong>Display and Memory:</strong> The left panel contains the original two-color 64x32 display with pixel-accurate rendering. Beside it, a live <strong>Memory Map</strong> visualizes all 4096 bytes of processor RAM. Hover over it to inspect memory addresses and their current values in real time.
                 </div>
                 <div class="desc-item">
-                    <strong>Набір інструментів розробника (IDE):</strong> Нижня панель об'єднує інтерактивний відладчик (Debug Panel) для контролю регістрів V0–VF, лічильника команд (PC) та таймерів, а також <strong>Стек даних (SPD Stack)</strong> для відстеження байтів у стеку.
+                    <strong>Developer Tools (IDE):</strong> The lower panel combines an interactive debugger for monitoring registers V0–VF, the program counter (PC), and timers, along with an <strong>SPD Stack</strong> for tracking stack values.
                 </div>
                 <div class="desc-item">
-                    <strong>Інтегрований Асемблер:</strong> Справа розташований текстовий редактор із підсвічуванням синтаксису. Ви можете писати код мовою мнемонік CHIP-8 (наприклад, `LD V0, 0xFF`, `CLS`), компілювати його прямо у браузері кнопкою <em>Compile & Run</em> та зберігати файли конфігурації у форматі `.asm`.
+                    <strong>Integrated Assembler:</strong> The editor on the right provides syntax highlighting for CHIP-8 mnemonics (for example, `LD V0, 0xFF` and `CLS`). Compile code in the browser with <em>Compile &amp; Run</em> and save source files in `.asm` format.
                 </div>
                 <div class="desc-item">
-                    <strong>Віртуальний диск (FAT/VFS):</strong> Проєкт емулює енергонезалежне сховище розміром 1 МБ. Компільовані бінарні файли та збережені асемблерні коди записуються у віртуальну таблицю файлів, яка синхронізується з локальним сховищем браузера (IndexedDB). Ви можете запускати або видаляти збережені файли прямо зі списку.
+                    <strong>Virtual Disk (FAT/VFS):</strong> The project emulates 1 MB of persistent storage. Compiled binaries and saved assembler source are stored in a virtual file table synchronized with the browser's IndexedDB. Run or delete files directly from the list.
                 </div>
             </div>
 
             <div class="banner-footer-hint">
-                <strong>Запуск ігор:</strong> Перетягніть будь-який готовий дамп гри (файл `.ch8`) у нижню область <strong>LOAD ROM</strong> або натисніть на неї для вибору файлу, щоб миттєво ініціалізувати емулятор.
+                <strong>Load a game:</strong> Drag a `.ch8` ROM file into the <strong>LOAD ROM</strong> area below, or click it to choose a file and load it into the emulator.
             </div>
         </div>
     </div>

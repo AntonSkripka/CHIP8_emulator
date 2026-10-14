@@ -40,17 +40,17 @@ void format_disk() {
     fat_table[1] = 0xFFFF;
     
     mark_disk_as_dirty();
-    printf("Форматування успішне. Доступно кластерів: %d\n", total_disk_clusters);
+    printf("Format complete. Available clusters: %d\n", total_disk_clusters);
 }
 
 EMSCRIPTEN_KEEPALIVE
 void vfs_init() {
     init_fs_pointers();
     if (strncmp(boot_sector->magic, "CH8F", 4) != 0) {
-        printf("Форматування...\n");
+        printf("Formatting disk...\n");
         format_disk();
     } else {
-        printf("Вільні кластери: %d\n", boot_sector->free_clusters);
+        printf("Free clusters: %d\n", boot_sector->free_clusters);
     }
 }
 

@@ -103,14 +103,14 @@ window.addEventListener('DOMContentLoaded', () => {
                 const code = editor ? editor.value : '';
 
                 if (!filename) {
-                    alert('Введіть назву файлу!');
+                    alert('Enter a file name.');
                     return;
                 }
 
                 filename = filename.replace(/[^a-zA-Z0-9.\-_]/g, '');
 
                 if (!filename) {
-                    alert(`Некоректне ім'я файлу. Можна використовувати лише латиницю та цифри`);
+                    alert('Invalid file name. Use only Latin letters, numbers, dots, hyphens, and underscores.');
                     return;
                 }
 
@@ -121,12 +121,12 @@ window.addEventListener('DOMContentLoaded', () => {
                 filenameInput.value = filename;
 
                 if (filename.length > 17) {
-                    alert(`Им'я файлу занадто довге (${filename.length} симв.)! Максимум - 17 символів, разом з .asm`);
+                    alert(`The file name is too long (${filename.length} characters). The maximum length is 17 characters, including .asm.`);
                     return;
                 }
 
                 if (!code) {
-                    alert('Редактор пустий!');
+                    alert('The editor is empty.');
                     return;
                 }
 
@@ -158,6 +158,6 @@ window.addEventListener('DOMContentLoaded', () => {
         emu.start();
 
     }).catch(err => {
-        console.error("Критична помилка при запуску CHIP-8 системи:", err);
+        console.error('Critical error while starting the CHIP-8 system:', err);
     });
 });

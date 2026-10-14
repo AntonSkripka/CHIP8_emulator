@@ -589,7 +589,7 @@ body {
     font-size: 14px;
 }
 
-#info-banner-ua {
+#info-banner {
     width: min(1320px, 100%);
     background: #0d0d0d;
     border: 1px solid #00ff00;
@@ -599,7 +599,7 @@ body {
     box-shadow: 0 0 20px rgba(0, 255, 0, 0.05), inset 0 0 10px rgba(0, 255, 0, 0.02);
 }
 
-#info-banner-ua .banner-header {
+#info-banner .banner-header {
     color: #000;
     background: #0f0;
     display: inline-block;
@@ -612,7 +612,7 @@ body {
     box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
 }
 
-#info-banner-ua .banner-body {
+#info-banner .banner-body {
     font-size: 14px;
     line-height: 1.6;
     color: #a0ffa0;
@@ -621,12 +621,12 @@ body {
     gap: 16px;
 }
 
-#info-banner-ua .banner-section {
+#info-banner .banner-section {
     border-bottom: 1px solid #222;
     padding-bottom: 14px;
 }
 
-#info-banner-ua .banner-grid-desc {
+#info-banner .banner-grid-desc {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
@@ -634,26 +634,26 @@ body {
     padding-bottom: 14px;
 }
 
-#info-banner-ua .desc-item {
+#info-banner .desc-item {
     background: #050505;
     border: 1px solid #1a1a1a;
     padding: 12px;
     border-radius: 4px;
 }
 
-#info-banner-ua .banner-footer-hint {
+#info-banner .banner-footer-hint {
     background: rgba(0, 255, 0, 0.03);
     border-left: 3px solid #0f0;
     padding: 8px 12px;
     color: #00ff00;
 }
 
-#info-banner-ua strong {
+#info-banner strong {
     color: #fff;
     text-shadow: 0 0 6px rgba(0, 255, 0, 0.6);
 }
 
-#info-banner-ua em {
+#info-banner em {
     color: #8af;
     font-style: normal;
     text-shadow: 0 0 4px rgba(136, 170, 255, 0.4);
@@ -661,7 +661,7 @@ body {
 
 
 @media (max-width: 900px) {
-    #info-banner-ua .banner-grid-desc {
+    #info-banner .banner-grid-desc {
         grid-template-columns: 1fr;
         gap: 12px;
     }

@@ -13,11 +13,11 @@ export class StorageBridge {
 
         if (savedDisk && savedDisk.byteLength === this.DISK_SIZE) {
             currentView.set(new Uint8Array(savedDisk));
-            console.log("Диск відновлен з IndexedDB");
+            console.log('Disk restored from IndexedDB.');
         } else {
             currentView.fill(0);
             await this.db.put('disk_image', currentView.slice().buffer);
-            console.log("Створен новий пустий диск в IndexedDB");
+            console.log('Created a new empty disk in IndexedDB.');
         }
 
         this.startSyncLoop();
@@ -34,7 +34,7 @@ export class StorageBridge {
         const isDirty = this.wasm._get_is_dirty();
         
         if (isDirty) {
-            console.log("Знайдені зміни. Збереження...");
+            console.log('Disk changes detected. Saving...');
             this.wasm._set_is_dirty(false);
 
             try {
@@ -42,9 +42,9 @@ export class StorageBridge {
                 const diskCopy = currentView.slice().buffer;
                 
                 await this.db.put('disk_image', diskCopy);
-                console.log("Синхронізація з IndexedDB виконана.");
+                console.log('Disk synchronized with IndexedDB.');
             } catch (error) {
-                console.error("Не вдалось зберегти диск у IndexedDB:", error);
+                console.error('Failed to save the disk to IndexedDB:', error);
                 this.wasm._set_is_dirty(true);
             }
         }
