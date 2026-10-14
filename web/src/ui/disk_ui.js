@@ -62,9 +62,6 @@ export class DiskUiManager {
         });
     }
 
-    /**
-     * Обработать действие с файлом в зависимости от его расширения
-     */
     handleFileAction(filename) {
         const romBytes = this.disk.readFile(filename);
         if (!romBytes || romBytes.length === 0) {
@@ -73,19 +70,16 @@ export class DiskUiManager {
         }
 
         if (filename.toLowerCase().endsWith('.asm')) {
-            // ИСХОДНЫЙ КОД: Декодируем байты обратно в текст и вставляем в редактор
             const decoder = new TextDecoder();
             const textCode = decoder.decode(romBytes);
             
             const editor = document.getElementById('asm-editor');
             if (editor) {
                 editor.value = textCode;
-                // Триггерим событие ввода, чтобы менеджер редактора обновил подсветку синтаксиса и номера строк
                 editor.dispatchEvent(new Event('input')); 
                 console.log(`[VFS UI] Исходный код ${filename} загружен в редактор.`);
             }
         } else {
-            // БИНАРНИК: Сбрасываем и инициализируем процессор CHIP-8
             this.emulator.reset();
             this.emulator.loadch(romBytes);
             console.log(`[VFS UI] Бинарник ${filename} успешно запущен.`);

@@ -6,3 +6,21 @@ Thumbs.db
 
 *.o
 *.out
+
+node_modules/
+dist/
+.vite/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+web/public/wasm/chip8.js
+web/public/wasm/chip8.wasm
+web/js/chip8.js
+web/js/chip8.wasm
+
+.cache/
+coverage/
+*.log

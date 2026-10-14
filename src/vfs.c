@@ -65,7 +65,7 @@ int vfs_write(const char* name, const uint8_t* data, uint32_t size) {
     if (free_slot == -1) return -2;
 
     uint16_t start_cluster = fat_write_data(data, size);
-    if (start_cluster == 0xFFFF) return -1; // FAT_ERROR_NO_SPACE
+    if (start_cluster == 0xFFFF) return -1;
 
     FAT_DirEntry* entry = fat_get_directory_entry(free_slot);
     safe_copy_filename(entry->filename, name);

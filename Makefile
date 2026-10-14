@@ -1,6 +1,6 @@
 CC = emcc
 SRC = src/chip8.c src/stack.c src/math_core.c src/disk_storage.c src/fat.c src/vfs.c
-OUT = web/js/chip8.js
+OUT = web/public/wasm/chip8.js
 
 FLAGS = -s MODULARIZE=1 \
         -s EXPORT_NAME="createChip8" \
@@ -9,8 +9,25 @@ FLAGS = -s MODULARIZE=1 \
         -s ALLOW_MEMORY_GROWTH=1 \
         -O3
 
-all:
+.PHONY: all wasm build deploy dev preview clean
+
+all: build
+
+wasm:
+	mkdir -p $(dir $(OUT))
 	$(CC) $(SRC) -o $(OUT) $(FLAGS)
 
+build: wasm
+	npm run build:site
+
+deploy: build
+
+dev: wasm
+	npm run dev:server
+
+preview:
+	npm run preview
+
 clean:
-	rm -f web/js/chip8.js web/js/chip8.wasm
+	rm -f web/public/wasm/chip8.js web/public/wasm/chip8.wasm
+	rm -rf dist

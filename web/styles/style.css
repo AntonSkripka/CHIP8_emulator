@@ -659,7 +659,7 @@ body {
     text-shadow: 0 0 4px rgba(136, 170, 255, 0.4);
 }
 
-/* Адаптивність для малих екранів */
+
 @media (max-width: 900px) {
     #info-banner-ua .banner-grid-desc {
         grid-template-columns: 1fr;

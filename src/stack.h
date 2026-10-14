@@ -14,4 +14,4 @@ void stack_clear(void);
 int get_spd(void);
 uint8_t get_stack_value(int index);
 
-#endif // STACK_H
+#endif

@@ -1,4 +1,4 @@
-import { asmToBin } from './asm.js';
+import { asmToBin } from '../assembler/asm.js';
 
 export class Chip8Core {
     constructor(module) {

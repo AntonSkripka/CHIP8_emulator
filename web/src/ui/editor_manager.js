@@ -1,4 +1,4 @@
-import { highlightCode } from './asm.js';
+import { highlightCode } from '../assembler/asm.js';
 
 export class EditorManager {
     constructor(editor, highlightOverlay, lineNumbers) {

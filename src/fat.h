@@ -25,7 +25,7 @@ typedef struct __attribute__((packed)) {
 } FAT_DirEntry;
 
 typedef struct __attribute__((packed)) {
-    char magic[4];            // "CH8F" (CHIP8 FAT Magic bytes)
+    char magic[4];
     uint16_t total_clusters;
     uint16_t free_clusters;
     uint16_t root_dir_offset;

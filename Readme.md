@@ -28,15 +28,40 @@ Removal: If you are the copyright holder of any code included here and wish for 
 ## Build & Installation
 
 ### Prerequisites
-To compile the C source files into WebAssembly, you must have the **Emscripten** installed and configured in your environment.
+Install **Node.js**, **npm**, **GNU Make**, and **Emscripten**. Emscripten must be available as `emcc`.
 
-### Compilation
-The project utilizes a `Makefile` to handle complex multi-file compilation (linking the math core, storage, stack, and file systems). Simply run the following command in the root directory:
+### Development
+Install the frontend dependencies and start the Vite development server from the repository root:
 
 ```bash
-make
+npm install
+npm run dev
 ```
-This will compile the source assets and update the optimized binary core at `web/js/chip8.wasm`.
+
+The dev script compiles the C sources into WebAssembly before starting the server.
+
+### Production build and deployment
+Build the production site with:
+
+```bash
+make deploy
+```
+
+The Makefile compiles the C core, then Vite builds `web/index.html` and its assets into `dist/`. Both the generated WebAssembly files and `dist/` are ignored by Git, so a deploy job should run `make deploy` before publishing the contents of `dist/`. Preview that output locally with `npm run preview` or `make preview`.
+
+Use `make clean` to remove the generated WebAssembly files and production output. Start the Vite development server with `npm run dev` or `make dev`; both commands generate the WebAssembly files first.
+
+### GitHub Pages
+The workflow in `.github/workflows/deploy.yml` builds and publishes the site to the `gh-pages` branch whenever code is pushed to `main`, or when started manually. The workflow compiles WebAssembly and Vite output on GitHub Actions; generated build files do not need to be committed. Its `contents: write` permission allows the workflow to create and update `gh-pages`.
+
+In **Settings → Actions → General**, allow **Read and write permissions** so the workflow token can publish. After the first successful run creates `gh-pages`, select **Settings → Pages → Build and deployment → Deploy from a branch → `gh-pages` → `/(root)`**. Vite uses relative asset paths so the site works both on a repository Pages URL and on a custom domain.
+
+### Project layout
+- `src/`: C/WebAssembly emulator source
+- `web/src/`: browser application modules, grouped by responsibility
+- `web/styles/`: application styles
+- `web/public/wasm/`: generated Emscripten loader and WebAssembly binary
+- `dist/`: Vite production output
 
 ---
 

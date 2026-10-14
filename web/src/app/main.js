@@ -1,10 +1,10 @@
-import { Chip8Emulator } from './index.js';
-import { KeyboardInput } from './keyboard.js';
-import { EditorManager } from './editor_manager.js';
-import { initializeDropZone } from './drop_zone.js';
-import { StorageBridge } from './storage.js';
-import { VirtualDisk } from './virtual_disk.js';
-import { DiskUiManager } from './disk_ui.js';
+import { Chip8Emulator } from '../core/index.js';
+import { KeyboardInput } from '../input/keyboard.js';
+import { EditorManager } from '../ui/editor_manager.js';
+import { initializeDropZone } from '../input/drop_zone.js';
+import { StorageBridge } from '../storage/storage.js';
+import { VirtualDisk } from '../storage/virtual_disk.js';
+import { DiskUiManager } from '../ui/disk_ui.js';
 
 const initIndexedDB = () => {
     return new Promise((resolve, reject) => {
@@ -37,11 +37,27 @@ const initIndexedDB = () => {
     });
 };
 
+const loadChip8 = () => {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `${import.meta.env.BASE_URL}wasm/chip8.js`;
+        script.onload = () => {
+            if (typeof window.createChip8 !== 'function') {
+                reject(new Error('The CHIP-8 WebAssembly loader did not expose createChip8.'));
+                return;
+            }
+            resolve(window.createChip8());
+        };
+        script.onerror = () => reject(new Error('Failed to load the CHIP-8 WebAssembly loader.'));
+        document.head.appendChild(script);
+    });
+};
+
 window.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('app-grid')) return;
 
     Promise.all([
-        createChip8(),
+        loadChip8(),
         initIndexedDB()
     ]).then(async ([Module, db]) => {
         const storageBridge = new StorageBridge(Module, db);
