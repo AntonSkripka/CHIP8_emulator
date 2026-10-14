@@ -1,3 +1,6 @@
+const MIN_SCALE = 0.1;
+const MAX_SCALE = 0.75;
+
 export class MemoryMapView {
     constructor({ core, canvas, infoElement, windowRef }) {
         this.core = core;
@@ -18,6 +21,8 @@ export class MemoryMapView {
             rows: 64,
             selectedAddress: -1
         };
+        this.centerMap();
+        this.clampPan();
         this.attachInteractions();
     }
 
@@ -101,7 +106,7 @@ export class MemoryMapView {
         const state = this.state;
         const worldX = (position.x - state.pointX) / state.scale;
         const worldY = (position.y - state.pointY) / state.scale;
-        const scale = Math.max(0.05, Math.min(15, state.scale * (event.deltaY < 0 ? 1.1 : 0.9)));
+        const scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, state.scale * (event.deltaY < 0 ? 1.1 : 0.9)));
 
         state.pointX = position.x - worldX * scale;
         state.pointY = position.y - worldY * scale;
@@ -142,8 +147,29 @@ export class MemoryMapView {
     }
 
     clampPan() {
-        this.state.pointX = Math.max(-this.canvas.width, Math.min(this.canvas.width, this.state.pointX));
-        this.state.pointY = Math.max(-this.canvas.height, Math.min(this.canvas.height, this.state.pointY));
+        this.state.pointX = this.clampAxis(
+            this.state.pointX,
+            this.state.cols * this.state.gridSize * this.state.scale,
+            this.canvas.width
+        );
+        this.state.pointY = this.clampAxis(
+            this.state.pointY,
+            this.state.rows * this.state.gridSize * this.state.scale,
+            this.canvas.height
+        );
+    }
+
+    centerMap() {
+        const contentWidth = this.state.cols * this.state.gridSize * this.state.scale;
+        const contentHeight = this.state.rows * this.state.gridSize * this.state.scale;
+        this.state.pointX = (this.canvas.width - contentWidth) / 2;
+        this.state.pointY = (this.canvas.height - contentHeight) / 2;
+    }
+
+    clampAxis(offset, contentSize, viewportSize) {
+        const minOffset = Math.min(0, viewportSize - contentSize);
+        const maxOffset = Math.max(0, viewportSize - contentSize);
+        return Math.max(minOffset, Math.min(maxOffset, offset));
     }
 
     updateSelectedAddress(clientX, clientY) {
