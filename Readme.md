@@ -66,6 +66,9 @@ In **Settings → Actions → General**, allow **Read and write permissions** so
 ### Application architecture
 `web/src/app/main.js` is the composition root: it creates infrastructure adapters and injects them into the UI and emulator components. The emulator controller depends on the core, display, monitor, memory-map view, and scheduler through constructor dependencies. Disk and ROM UI components communicate with emulator actions through callbacks rather than importing or invoking the emulator directly. Browser APIs, assembly compilation, and IndexedDB access are injected at the application boundary.
 
+### Terminal interface
+The browser UI opens with a BIOS-style boot sequence and keyboard-operated main menu. User Mode presents the CHIP-8 display and ROM loader; Developer Mode adds the assembler, register and stack monitors, memory map, and virtual disk. Settings offer monochrome, green phosphor, amber, and blue palettes, with the selected theme persisted in `localStorage`. The terminal navigation and theme manager live in `web/src/ui/terminal_shell.js` and `web/src/themes/`; shared palette tokens are in `web/styles/themes.css`.
+
 ---
 
 ## Roadmap & Development Progress

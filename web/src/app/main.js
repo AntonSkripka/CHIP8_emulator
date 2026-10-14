@@ -2,6 +2,7 @@ import { asmToBin, highlightCode } from '../assembler/asm.js';
 import { Chip8Display } from '../core/display.js';
 import { Chip8Core } from '../core/emulator_core.js';
 import { Chip8Emulator } from '../core/chip8_emulator.js';
+import { DEFAULT_PONG_ROM } from '../core/default_rom.js';
 import { loadWasmModule } from '../core/load_wasm_module.js';
 import { KeyboardInput } from '../input/keyboard.js';
 import { DropZoneManager } from '../input/drop_zone.js';
@@ -44,6 +45,9 @@ export async function startApplication({
     module._vfs_init();
 
     const disk = new VirtualDisk(module, { logger });
+    if (!disk.getFilesList().some(({ name }) => name.toLowerCase() === 'pong.ch8')) {
+        disk.writeFile('PONG.ch8', Uint8Array.from(DEFAULT_PONG_ROM));
+    }
     const core = new Chip8Core(module, asmToBin);
     core.init();
     const display = new Chip8Display({
@@ -186,12 +190,3 @@ function saveAssembly({ editor, editorManager, filenameInput, statusElement, dis
         statusElement.className = '';
     }, 2000);
 }
-
-window.addEventListener('DOMContentLoaded', () => {
-    startApplication({
-        documentRef: document,
-        windowRef: window
-    }).catch((error) => {
-        console.error('Critical error while starting the CHIP-8 system:', error);
-    });
-});

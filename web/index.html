@@ -1,88 +1,208 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="green">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#050A05">
     <title>CHIP-8</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles/themes.css">
     <link rel="stylesheet" href="./styles/style.css">
 </head>
 
 <body>
-    <div id="info-banner">
-        <div class="banner-header">SYSTEM SPECIFICATION AND USER GUIDE</div>
-        <div class="banner-body">
-            <div class="banner-section">
-                <strong>About the project:</strong> A complete low-level development and emulation environment for the CHIP-8 architecture. Its core is a high-performance CPU interpreter and virtual file system (VFS), written in <strong>C</strong> and compiled by Emscripten to <strong>WebAssembly (WASM)</strong>. This enables fast instruction execution at 60 FPS and direct memory access through a JavaScript `Uint8ClampedArray`.
+    <div id="terminal-background" aria-hidden="true"></div>
+    <main id="terminal-shell">
+        <section id="boot-screen" class="screen boot-screen" aria-labelledby="boot-title">
+            <div class="boot-panel">
+                <pre id="boot-title" class="ascii-logo" aria-label="CHIP-8">  ____ _   _ ___ ____        ___
+ / ___| | | |_ _|  _ \      / _ \
+| |   | |_| || || |_) |____| (_) |
+| |___|  _  || ||  __/_____| (_) |
+ \____|_| |_|___|_|         \ _ /</pre>
+                <p class="boot-message">CHIP-8 VIRTUAL</p>
+                <div class="boot-progress" role="progressbar" aria-label="System boot progress" aria-valuemin="0"
+                    aria-valuemax="100" aria-valuenow="0">
+                    <span id="boot-progress-fill">░░░░░░░░░░</span>
+                </div>
+                <p id="boot-status" class="boot-status">INITIALIZING SYSTEM...</p>
             </div>
-            
-            <div class="banner-grid-desc">
-                <div class="desc-item">
-                    <strong>Display and Memory:</strong> The left panel contains the original two-color 64x32 display with pixel-accurate rendering. Beside it, a live <strong>Memory Map</strong> visualizes all 4096 bytes of processor RAM. Hover over it to inspect memory addresses and their current values in real time.
-                </div>
-                <div class="desc-item">
-                    <strong>Developer Tools (IDE):</strong> The lower panel combines an interactive debugger for monitoring registers V0–VF, the program counter (PC), and timers, along with an <strong>SPD Stack</strong> for tracking stack values.
-                </div>
-                <div class="desc-item">
-                    <strong>Integrated Assembler:</strong> The editor on the right provides syntax highlighting for CHIP-8 mnemonics (for example, `LD V0, 0xFF` and `CLS`). Compile code in the browser with <em>Compile &amp; Run</em> and save source files in `.asm` format.
-                </div>
-                <div class="desc-item">
-                    <strong>Virtual Disk (FAT/VFS):</strong> The project emulates 1 MB of persistent storage. Compiled binaries and saved assembler source are stored in a virtual file table synchronized with the browser's IndexedDB. Run or delete files directly from the list.
-                </div>
-            </div>
+        </section>
 
-            <div class="banner-footer-hint">
-                <strong>Load a game:</strong> Drag a `.ch8` ROM file into the <strong>LOAD ROM</strong> area below, or click it to choose a file and load it into the emulator.
+        <section id="home-screen" class="screen terminal-window" aria-labelledby="home-title" hidden>
+            <header class="terminal-heading">
+                <span>CHIP-8 VIRTUAL</span>
+                <span>BUILD 0.21</span>
+            </header>
+            <div class="terminal-content">
+                <pre class="menu-logo" aria-hidden="true">╔══════════════════════════════════════╗
+║      C H I P - 8   S Y S T E M       ║
+╚══════════════════════════════════════╝</pre>
+                <h1 id="home-title" class="screen-title">MAIN MENU</h1>
+                <p class="system-prompt">SELECT OPERATING MODE:</p>
+                <nav id="main-menu" class="terminal-menu" aria-label="Main menu">
+                    <button class="menu-option is-selected" data-menu-index="0" data-action="user">
+                        <span class="menu-cursor" aria-hidden="true">&gt;</span>
+                        <span>[1] START EMULATOR (USER MODE)</span>
+                    </button>
+                    <button class="menu-option" data-menu-index="1" data-action="developer">
+                        <span class="menu-cursor" aria-hidden="true">&nbsp;</span>
+                        <span>[2] DEVELOPER MODE</span>
+                    </button>
+                    <button class="menu-option" data-menu-index="2" data-action="settings">
+                        <span class="menu-cursor" aria-hidden="true">&nbsp;</span>
+                        <span>[3] SETTINGS</span>
+                    </button>
+                    <button class="menu-option" data-menu-index="3" data-action="about">
+                        <span class="menu-cursor" aria-hidden="true">&nbsp;</span>
+                        <span>[4] ABOUT</span>
+                    </button>
+                </nav>
+                <p class="navigation-hint">[↑/↓] SELECT &nbsp; [ENTER] CONFIRM</p>
             </div>
-        </div>
-    </div>
-    <h1>CHIP-8 WASM</h1>
-    <div id="app-grid">
-        <div id="screens-row">
-            <div id="display-panel">
-                <canvas id="display" width="64" height="32"></canvas>
-            </div>
-            <div id="memory-panel">
-                <canvas id="memory-map-canvas" width="640" height="320"></canvas>
-                <div id="mem-info">Addr: 0x000 | Val: 0x00 (0)</div>
-            </div>
-        </div>
-        <div id="tools-row">
-            <div id="debug-panel"></div>
-            <div id="stack-panel">
-                <div class="panel-header">SPD Stack</div>
-                <div id="stack-container"></div>
-            </div>
-            <div id="editor-container">
-                <div class="editor-controls">
-                    <input type="text" id="asm-filename" value="project.asm" placeholder="Name..."
-                        spellcheck="false">
-                    <button id="save-button">Save to Disk</button>
-                </div>
-                <div class="editor-wrapper">
-                    <div id="line-numbers"></div>
-                    <div id="asm-highlight"></div>
-                    <textarea id="asm-editor" spellcheck="false"></textarea>
-                </div>
-                <button id="run-button">Compile & Run</button>
-            </div>
-        </div>
+            <footer class="terminal-footer">MEMORY CHECK: OK <span>READY_</span></footer>
+        </section>
 
-        <div id="disk-panel">
-            <div class="panel-header">VIRTUAL DISK 1MB</div>
-            <ul id="file-list">
-            </ul>
-        </div>
-    </div>
-    <div id="drop-zone">
-        <div id="drop-zone-content">
-            <div id="drop-zone-title">LOAD ROM</div>
-            <div id="drop-zone-hint">Drag & Drop .ch8 file here or click to select</div>
-            <div id="drop-zone-status"></div>
-        </div>
-        <input type="file" id="file-input" accept=".ch8" style="display: none;">
-    </div>
-    <script type="module" src="./src/app/main.js"></script>
+        <section id="settings-screen" class="screen terminal-window" aria-labelledby="settings-title" hidden>
+            <header class="terminal-heading">
+                <span>SYSTEM CONFIGURATION</span>
+                <span>DISPLAY / COLOR</span>
+            </header>
+            <div class="terminal-content">
+                <pre class="box-title">╔══════════════════════════════════════╗
+║          DISPLAY COLOR MODE          ║
+╚══════════════════════════════════════╝</pre>
+                <h1 id="settings-title" class="screen-title">SELECT PHOSPHOR PALETTE</h1>
+                <p class="system-prompt">USE [↑/↓] TO SELECT A COLOR SCHEME:</p>
+                <div id="theme-options" class="theme-options" role="radiogroup" aria-label="Color theme">
+                    <button class="theme-option" data-theme-option="mono" role="radio" aria-checked="false">
+                        <span class="theme-cursor" aria-hidden="true">&nbsp;</span>
+                        <span class="theme-swatch" data-swatch="mono" aria-hidden="true"></span>
+                        <span>MONOCHROME</span>
+                    </button>
+                    <button class="theme-option" data-theme-option="green" role="radio" aria-checked="false">
+                        <span class="theme-cursor" aria-hidden="true">&nbsp;</span>
+                        <span class="theme-swatch" data-swatch="green" aria-hidden="true"></span>
+                        <span>GREEN PHOSPHOR</span>
+                    </button>
+                    <button class="theme-option" data-theme-option="amber" role="radio" aria-checked="false">
+                        <span class="theme-cursor" aria-hidden="true">&nbsp;</span>
+                        <span class="theme-swatch" data-swatch="amber" aria-hidden="true"></span>
+                        <span>AMBER TERMINAL</span>
+                    </button>
+                    <button class="theme-option" data-theme-option="blue" role="radio" aria-checked="false">
+                        <span class="theme-cursor" aria-hidden="true">&nbsp;</span>
+                        <span class="theme-swatch" data-swatch="blue" aria-hidden="true"></span>
+                        <span>BLUE TERMINAL</span>
+                    </button>
+                </div>
+                <p class="navigation-hint">[↑/↓] SELECT &nbsp; [ENTER] APPLY &nbsp; [ESC] RETURN</p>
+                <button class="terminal-button back-button" data-action="home">[ ESC ] RETURN TO MAIN MENU</button>
+            </div>
+            <footer class="terminal-footer">CONFIGURATION SAVED LOCALLY <span>READY_</span></footer>
+        </section>
+
+        <section id="about-screen" class="screen terminal-window" aria-labelledby="about-title" hidden>
+            <header class="terminal-heading">
+                <span>SYSTEM INFORMATION</span>
+                <span>ABOUT</span>
+            </header>
+            <div class="terminal-content about-content">
+                <pre class="box-title">╔══════════════════════════════════════╗
+║          SYSTEM INFORMATION          ║
+╚══════════════════════════════════════╝</pre>
+                <h1 id="about-title" class="screen-title">CHIP-8 VIRTUAL MACHINE</h1>
+<p class="about-intro">A COMPLETE LOW-LEVEL DEVELOPMENT AND EMULATION ENVIRONMENT FOR THE CHIP-8
+    ARCHITECTURE. THE CPU INTERPRETER AND VIRTUAL FILE SYSTEM ARE WRITTEN IN C AND COMPILED TO
+    WEBASSEMBLY FOR FAST IN-BROWSER EXECUTION.</p>
+<div class="about-section">
+    <h2>[ DISPLAY AND MEMORY ]</h2>
+    <p>THE ORIGINAL TWO-COLOR 64 × 32 DISPLAY RENDERS CHIP-8 GRAPHICS. DEVELOPER MODE ALSO INCLUDES A
+        LIVE MEMORY MAP OF ALL 4096 BYTES OF RAM. POINT AT A CELL TO INSPECT ITS ADDRESS AND VALUE.</p>
+</div>
+<div class="about-section">
+    <h2>[ DEVELOPER TOOLS ]</h2>
+    <p>MONITOR THE V0–VF REGISTERS, PROGRAM COUNTER, INDEX REGISTER, STACK POINTER, TIMERS, AND CALL
+        STACK WHILE A ROM RUNS.</p>
+</div>
+<div class="about-section">
+    <h2>[ INTEGRATED ASSEMBLER ]</h2>
+    <p>WRITE CHIP-8 MNEMONICS SUCH AS <code>LD V0, 0xFF</code> OR <code>CLS</code>, THEN COMPILE AND
+        RUN THEM IN THE BROWSER. ASSEMBLY SOURCE FILES CAN BE SAVED TO THE VIRTUAL DISK.</p>
+</div>
+<div class="about-section">
+    <h2>[ VIRTUAL DISK / FAT VFS ]</h2>
+    <p>THE EMULATOR PROVIDES 1 MB OF VIRTUAL STORAGE. ROMS AND ASSEMBLY FILES ARE STORED IN THE VIRTUAL
+        FILE SYSTEM AND SYNCHRONIZED WITH BROWSER INDEXEDDB.</p>
+</div>
+<p class="about-features">LOAD A GAME: DROP A .CH8 ROM ON THE LOAD ROM PANEL OR SELECT A FILE.<br>
+    USER MODE: PLAY ROMS WITH A CLEAN DISPLAY.<br>
+    DEVELOPER MODE: ACCESS THE ASSEMBLER AND LIVE DIAGNOSTIC TOOLS.</p>
+<button class="terminal-button back-button" data-action="home">[ ESC ] RETURN TO MAIN MENU</button>
+            </div>
+            <footer class="terminal-footer">ALL SYSTEMS NOMINAL <span>READY_</span></footer>
+        </section>
+
+        <section id="emulator-screen" class="screen emulator-screen" aria-labelledby="emulator-title" hidden>
+            <header class="emulator-heading">
+                <div>
+                    <p class="eyebrow">CHIP-8 VIRTUAL MACHINE</p>
+                    <h1 id="emulator-title" tabindex="-1">USER MODE</h1>
+                </div>
+                <button class="terminal-button" data-action="home">[ ESC ] MAIN MENU</button>
+            </header>
+            <p id="emulator-status" class="emulator-status" role="status">SYSTEM READY. LOAD A ROM TO BEGIN.</p>
+            <div id="app-grid">
+                <div id="screens-row">
+                    <section id="display-panel" class="terminal-panel" aria-label="CHIP-8 display">
+                        <div class="panel-header">VIDEO OUTPUT / 64 × 32</div>
+                        <canvas id="display" width="64" height="32"></canvas>
+                    </section>
+                    <section id="memory-panel" class="terminal-panel" aria-label="Memory map">
+                        <div class="panel-header">MEMORY MAP / 4096 BYTES</div>
+                        <canvas id="memory-map-canvas" width="640" height="320"></canvas>
+                        <div id="mem-info">ADDR: 0x000 | VAL: 0x00 (0)</div>
+                    </section>
+                </div>
+                <div id="tools-row">
+                    <section id="debug-panel" class="terminal-panel" aria-label="Processor registers"></section>
+                    <section id="stack-panel" class="terminal-panel">
+                        <div class="panel-header">CALL STACK</div>
+                        <div id="stack-container"></div>
+                    </section>
+                    <section id="editor-container" class="terminal-panel">
+                        <div class="editor-controls">
+                            <input type="text" id="asm-filename" value="project.asm" placeholder="FILE NAME"
+                                spellcheck="false" aria-label="Assembly filename">
+                            <button id="save-button" class="terminal-button">SAVE TO DISK</button>
+                        </div>
+                        <div class="editor-wrapper">
+                            <div id="line-numbers" aria-hidden="true"></div>
+                            <div id="asm-highlight" aria-hidden="true"></div>
+                            <textarea id="asm-editor" spellcheck="false" aria-label="CHIP-8 assembly editor"></textarea>
+                        </div>
+                        <button id="run-button" class="terminal-button">COMPILE &amp; RUN</button>
+                    </section>
+                </div>
+                <section id="disk-panel" class="terminal-panel">
+                    <div class="panel-header">VIRTUAL DISK / 1 MB</div>
+                    <ul id="file-list"></ul>
+                </section>
+            </div>
+            <div id="drop-zone" role="button" tabindex="0" aria-label="Load CHIP-8 ROM">
+                <div id="drop-zone-content">
+                    <div id="drop-zone-title">[ LOAD ROM ]</div>
+                    <div id="drop-zone-hint">DROP A .CH8 FILE HERE OR SELECT FROM DISK</div>
+                    <div id="drop-zone-status" role="status"></div>
+                </div>
+                <input type="file" id="file-input" accept=".ch8" hidden>
+            </div>
+        </section>
+    </main>
+    <script type="module" src="./src/ui/terminal_shell.js"></script>
 </body>
 
 </html>
