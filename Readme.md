@@ -63,6 +63,9 @@ In **Settings → Actions → General**, allow **Read and write permissions** so
 - `web/public/wasm/`: generated Emscripten loader and WebAssembly binary
 - `dist/`: Vite production output
 
+### Application architecture
+`web/src/app/main.js` is the composition root: it creates infrastructure adapters and injects them into the UI and emulator components. The emulator controller depends on the core, display, monitor, memory-map view, and scheduler through constructor dependencies. Disk and ROM UI components communicate with emulator actions through callbacks rather than importing or invoking the emulator directly. Browser APIs, assembly compilation, and IndexedDB access are injected at the application boundary.
+
 ---
 
 ## Roadmap & Development Progress

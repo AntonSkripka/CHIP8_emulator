@@ -1,5 +1,5 @@
-export class CHIP8Display {
-    constructor(canvas, core) {
+export class Chip8Display {
+    constructor({ canvas, core }) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.core = core;
@@ -13,12 +13,8 @@ export class CHIP8Display {
             return;
         }
 
-        const displayPtr = this.core.getDisplayPtr();
-        const pixels = new Uint8ClampedArray(
-            this.core.module.HEAPU8.buffer,
-            displayPtr,
-            this.width * this.height * 4
-        );
+        const pixels = this.core.getDisplayPixels(this.width * this.height * 4);
+        if (!pixels) return;
 
         this.imageData.data.set(pixels);
         this.ctx.putImageData(this.imageData, 0, 0);

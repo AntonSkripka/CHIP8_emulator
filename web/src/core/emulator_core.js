@@ -1,8 +1,7 @@
-import { asmToBin } from '../assembler/asm.js';
-
 export class Chip8Core {
-    constructor(module) {
+    constructor(module, assemble) {
         this.module = module;
+        this.assemble = assemble;
         this.vRegsPtr = null;
         this.displayPtr = null;
         this.memoryPtr = null;
@@ -28,7 +27,7 @@ export class Chip8Core {
     }
 
     loadBin(code) {
-        const segments = asmToBin(code);
+        const segments = this.assemble(code);
         if (!segments) return;
 
         for (const seg of segments) {
@@ -53,6 +52,11 @@ export class Chip8Core {
         return this.displayPtr;
     }
 
+    getDisplayPixels(length = 64 * 32 * 4) {
+        if (this.displayPtr === null) return null;
+        return new Uint8ClampedArray(this.module.HEAPU8.buffer, this.displayPtr, length);
+    }
+
     getMemoryPtr() {
         return this.memoryPtr;
     }
@@ -64,6 +68,11 @@ export class Chip8Core {
     getVRegistersView() {
         if (this.vRegsPtr === null) return null;
         return new Uint8Array(this.module.HEAPU8.buffer, this.vRegsPtr, 16);
+    }
+
+    getMemoryView() {
+        if (this.memoryPtr === null) return null;
+        return new Uint8Array(this.module.HEAPU8.buffer, this.memoryPtr, 4096);
     }
 
     getDrawFlag() {
@@ -92,5 +101,9 @@ export class Chip8Core {
 
     getCallStackPtr() {
         return this.module._get_call_stack_ptr();
+    }
+
+    hasStackSupport() {
+        return typeof this.module._get_spd === 'function';
     }
 }

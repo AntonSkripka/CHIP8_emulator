@@ -1,163 +1,197 @@
-import { Chip8Emulator } from '../core/index.js';
+import { asmToBin, highlightCode } from '../assembler/asm.js';
+import { Chip8Display } from '../core/display.js';
+import { Chip8Core } from '../core/emulator_core.js';
+import { Chip8Emulator } from '../core/chip8_emulator.js';
+import { loadWasmModule } from '../core/load_wasm_module.js';
 import { KeyboardInput } from '../input/keyboard.js';
-import { EditorManager } from '../ui/editor_manager.js';
-import { initializeDropZone } from '../input/drop_zone.js';
+import { DropZoneManager } from '../input/drop_zone.js';
+import { IndexedDbStore } from '../storage/indexed_db_store.js';
 import { StorageBridge } from '../storage/storage.js';
 import { VirtualDisk } from '../storage/virtual_disk.js';
 import { DiskUiManager } from '../ui/disk_ui.js';
+import { EmulatorMonitor } from '../ui/emulator_monitor.js';
+import { EditorManager } from '../ui/editor_manager.js';
+import { MemoryMapView } from '../ui/memory_map_view.js';
 
-const initIndexedDB = () => {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open('Chip8VirtualDiskDB', 1);
+export async function startApplication({
+    documentRef,
+    windowRef,
+    logger = console,
+    confirmDelete = windowRef.confirm.bind(windowRef),
+    showAlert = windowRef.alert.bind(windowRef)
+}) {
+    if (!documentRef.getElementById('app-grid')) return;
 
-        request.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('disk_store')) {
-                db.createObjectStore('disk_store');
-            }
-        };
+    const [module, database] = await Promise.all([
+        loadWasmModule({
+            documentRef,
+            globalObject: windowRef,
+            scriptUrl: `${import.meta.env.BASE_URL}wasm/chip8.js`
+        }),
+        IndexedDbStore.open({ indexedDBRef: windowRef.indexedDB })
+    ]);
 
-        request.onsuccess = (e) => {
-            const db = e.target.result;
-            resolve({
-                get: (key) => new Promise((res) => {
-                    const tx = db.transaction('disk_store', 'readonly');
-                    const req = tx.objectStore('disk_store').get(key);
-                    req.onsuccess = () => res(req.result);
-                }),
-                put: (key, val) => new Promise((res, rej) => {
-                    const tx = db.transaction('disk_store', 'readwrite');
-                    const req = tx.objectStore('disk_store').put(val, key);
-                    req.onsuccess = () => res();
-                    req.onerror = () => rej(req.error);
-                })
-            });
-        };
-        request.onerror = () => reject(request.error);
+    const storage = new StorageBridge({
+        wasmModule: module,
+        database,
+        windowRef,
+        documentRef,
+        logger,
+        setIntervalRef: windowRef.setInterval.bind(windowRef),
+        clearIntervalRef: windowRef.clearInterval.bind(windowRef)
     });
-};
+    await storage.init();
+    module._vfs_init();
 
-const loadChip8 = () => {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = `${import.meta.env.BASE_URL}wasm/chip8.js`;
-        script.onload = () => {
-            if (typeof window.createChip8 !== 'function') {
-                reject(new Error('The CHIP-8 WebAssembly loader did not expose createChip8.'));
-                return;
-            }
-            resolve(window.createChip8());
-        };
-        script.onerror = () => reject(new Error('Failed to load the CHIP-8 WebAssembly loader.'));
-        document.head.appendChild(script);
+    const disk = new VirtualDisk(module, { logger });
+    const core = new Chip8Core(module, asmToBin);
+    core.init();
+    const display = new Chip8Display({
+        canvas: documentRef.getElementById('display'),
+        core
     });
-};
+    const monitor = new EmulatorMonitor({
+        core,
+        documentRef,
+        debugPanel: documentRef.getElementById('debug-panel'),
+        stackContainer: documentRef.getElementById('stack-container')
+    });
+    const memoryMap = new MemoryMapView({
+        core,
+        canvas: documentRef.getElementById('memory-map-canvas'),
+        infoElement: documentRef.getElementById('mem-info'),
+        windowRef
+    });
+    const emulator = new Chip8Emulator({
+        core,
+        display,
+        monitor,
+        memoryMap,
+        scheduler: {
+            now: () => windowRef.performance.now(),
+            requestFrame: (callback) => windowRef.requestAnimationFrame(callback)
+        },
+        logger
+    });
+
+    const editor = documentRef.getElementById('asm-editor');
+    const editorManager = new EditorManager({
+        editor,
+        highlightOverlay: documentRef.getElementById('asm-highlight'),
+        lineNumbers: documentRef.getElementById('line-numbers'),
+        highlightCode
+    });
+    editorManager.attach();
+
+    const refreshDisk = () => diskUi.refresh();
+    const diskUi = new DiskUiManager({
+        disk,
+        documentRef,
+        fileListElement: documentRef.getElementById('file-list'),
+        diskHeaderElement: documentRef.querySelector('#disk-panel .panel-header'),
+        editor,
+        confirmDelete,
+        showAlert,
+        logger,
+        onLoadSource: (source) => {
+            editor.value = source;
+            editor.dispatchEvent(new windowRef.Event('input'));
+        },
+        onRunRom: (rom) => {
+            emulator.reset();
+            emulator.loadRom(rom);
+        }
+    });
+    refreshDisk();
+
+    const keyboard = new KeyboardInput({
+        setKey: (key, pressed) => module._set_key(key, pressed),
+        eventTarget: windowRef
+    });
+    keyboard.attach();
+
+    documentRef.getElementById('run-button').addEventListener('click', () => {
+        emulator.runAsm(editor?.value ?? '');
+    });
+
+    documentRef.getElementById('save-button').addEventListener('click', () => {
+        saveAssembly({
+            editor,
+            editorManager,
+            filenameInput: documentRef.getElementById('asm-filename'),
+            statusElement: documentRef.getElementById('drop-zone-status'),
+            disk,
+            refreshDisk,
+            encoder: new TextEncoder(),
+            showAlert
+        });
+    });
+
+    const dropZone = new DropZoneManager({
+        dropZone: documentRef.getElementById('drop-zone'),
+        fileInput: documentRef.getElementById('file-input'),
+        statusElement: documentRef.getElementById('drop-zone-status'),
+        eventTarget: documentRef.body,
+        onSaveRom: (filename, rom) => disk.writeFile(filename, rom),
+        onLoadRom: (rom) => {
+            emulator.reset();
+            emulator.loadRom(rom);
+        },
+        onDiskUpdated: refreshDisk,
+        logger
+    });
+
+    emulator.start();
+    return { core, display, emulator, disk, diskUi, editorManager, keyboard, dropZone, storage };
+}
+
+function saveAssembly({ editor, editorManager, filenameInput, statusElement, disk, refreshDisk, encoder, showAlert }) {
+    let filename = filenameInput.value.trim();
+    const source = editor?.value ?? '';
+
+    if (!filename) {
+        showAlert('Enter a file name.');
+        return;
+    }
+
+    filename = filename.replace(/[^a-zA-Z0-9.\-_]/g, '');
+    if (!filename) {
+        showAlert('Invalid file name. Use only Latin letters, numbers, dots, hyphens, and underscores.');
+        return;
+    }
+
+    if (!filename.toLowerCase().endsWith('.asm')) filename += '.asm';
+    filenameInput.value = filename;
+
+    if (filename.length > 17) {
+        showAlert(`The file name is too long (${filename.length} characters). The maximum length is 17 characters, including .asm.`);
+        return;
+    }
+
+    if (!source) {
+        showAlert('The editor is empty.');
+        return;
+    }
+
+    if (!disk.writeFile(filename, encoder.encode(source))) return;
+
+    refreshDisk();
+    editor.value = '';
+    editorManager.updateHighlight();
+    editorManager.updateLineNumbers();
+    statusElement.textContent = `✓ Saved ASM: ${filename}`;
+    statusElement.className = 'success';
+    setTimeout(() => {
+        statusElement.textContent = '';
+        statusElement.className = '';
+    }, 2000);
+}
 
 window.addEventListener('DOMContentLoaded', () => {
-    if (!document.getElementById('app-grid')) return;
-
-    Promise.all([
-        loadChip8(),
-        initIndexedDB()
-    ]).then(async ([Module, db]) => {
-        const storageBridge = new StorageBridge(Module, db);
-        await storageBridge.init();
-        Module._vfs_init();
-        const disk = new VirtualDisk(Module);
-        const canvas = document.getElementById('display');
-        const emu = new Chip8Emulator(canvas, Module);
-        const diskUi = new DiskUiManager(disk, emu, (filename) => {
-            const statusElement = document.getElementById('drop-zone-status');
-            if (statusElement) {
-                statusElement.textContent = `✓ Active: ${filename}`;
-                statusElement.className = 'success';
-            }
-        });
-        const updateDiskUI = () => {
-            diskUi.refresh();
-        };
-        updateDiskUI();
-        const keyboard = new KeyboardInput(Module);
-        keyboard.attach();
-
-        const editor = document.getElementById('asm-editor');
-        const highlightOverlay = document.getElementById('asm-highlight');
-        const lineNumbers = document.getElementById('line-numbers');
-        const runButton = document.getElementById('run-button');
-        const saveButton = document.getElementById('save-button');
-        const filenameInput = document.getElementById('asm-filename');
-
-        const editorManager = new EditorManager(editor, highlightOverlay, lineNumbers);
-        editorManager.attach();
-
-        if (runButton) {
-            runButton.addEventListener('click', () => {
-                const code = editor ? editor.value : '';
-                emu.runAsm(code);
-            });
-        }
-
-        if (saveButton && filenameInput) {
-            saveButton.addEventListener('click', () => {
-                let filename = filenameInput.value.trim();
-                const code = editor ? editor.value : '';
-
-                if (!filename) {
-                    alert('Enter a file name.');
-                    return;
-                }
-
-                filename = filename.replace(/[^a-zA-Z0-9.\-_]/g, '');
-
-                if (!filename) {
-                    alert('Invalid file name. Use only Latin letters, numbers, dots, hyphens, and underscores.');
-                    return;
-                }
-
-                if (!filename.toLowerCase().endsWith('.asm')) {
-                    filename += '.asm';
-                }
-                
-                filenameInput.value = filename;
-
-                if (filename.length > 17) {
-                    alert(`The file name is too long (${filename.length} characters). The maximum length is 17 characters, including .asm.`);
-                    return;
-                }
-
-                if (!code) {
-                    alert('The editor is empty.');
-                    return;
-                }
-
-                const encoder = new TextEncoder();
-                const codeBytes = encoder.encode(code);
-
-                const success = disk.writeFile(filename, codeBytes);
-                if (success) {
-                    updateDiskUI();
-                    const statusElement = document.getElementById('drop-zone-status');
-                    editor.value = "";
-                    
-                    if (editorManager && typeof editorManager.updateHighlight === 'function') {
-                        editorManager.updateHighlight();
-                        editorManager.updateLineNumbers();
-                    }
-
-                    if (statusElement) {
-                        statusElement.textContent = `✓ Saved ASM: ${filename}`;
-                        statusElement.className = 'success';
-                        setTimeout(() => { statusElement.textContent = ''; statusElement.className = ''; }, 2000);
-                    }
-                }
-            });
-        }
-
-        initializeDropZone(emu, disk, updateDiskUI);
-
-        emu.start();
-
-    }).catch(err => {
-        console.error('Critical error while starting the CHIP-8 system:', err);
+    startApplication({
+        documentRef: document,
+        windowRef: window
+    }).catch((error) => {
+        console.error('Critical error while starting the CHIP-8 system:', error);
     });
 });

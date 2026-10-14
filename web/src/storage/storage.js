@@ -1,9 +1,18 @@
 export class StorageBridge {
-    constructor(wasmModule, dbInstance) {
+    constructor({ wasmModule, database, windowRef, documentRef, logger = console, setIntervalRef, clearIntervalRef }) {
         this.wasm = wasmModule;
-        this.db = dbInstance;
+        this.db = database;
+        this.window = windowRef;
+        this.document = documentRef;
+        this.logger = logger;
+        this.setInterval = setIntervalRef;
+        this.clearInterval = clearIntervalRef;
         this.diskPtr = null;
         this.DISK_SIZE = 1024 * 1024;
+        this.handleBeforeUnload = () => this.syncToDatabase();
+        this.handleVisibilityChange = () => {
+            if (this.document.visibilityState === 'hidden') this.syncToDatabase();
+        };
     }
 
     async init() {
@@ -13,11 +22,11 @@ export class StorageBridge {
 
         if (savedDisk && savedDisk.byteLength === this.DISK_SIZE) {
             currentView.set(new Uint8Array(savedDisk));
-            console.log('Disk restored from IndexedDB.');
+            this.logger.log('Disk restored from IndexedDB.');
         } else {
             currentView.fill(0);
             await this.db.put('disk_image', currentView.slice().buffer);
-            console.log('Created a new empty disk in IndexedDB.');
+            this.logger.log('Created a new empty disk in IndexedDB.');
         }
 
         this.startSyncLoop();
@@ -25,7 +34,7 @@ export class StorageBridge {
     }
 
     startSyncLoop() {
-        this.intervalId = setInterval(() => {
+        this.intervalId = this.setInterval(() => {
             this.syncToDatabase();
         }, 3000);
     }
@@ -34,7 +43,7 @@ export class StorageBridge {
         const isDirty = this.wasm._get_is_dirty();
         
         if (isDirty) {
-            console.log('Disk changes detected. Saving...');
+            this.logger.log('Disk changes detected. Saving...');
             this.wasm._set_is_dirty(false);
 
             try {
@@ -42,22 +51,22 @@ export class StorageBridge {
                 const diskCopy = currentView.slice().buffer;
                 
                 await this.db.put('disk_image', diskCopy);
-                console.log('Disk synchronized with IndexedDB.');
+                this.logger.log('Disk synchronized with IndexedDB.');
             } catch (error) {
-                console.error('Failed to save the disk to IndexedDB:', error);
+                this.logger.error('Failed to save the disk to IndexedDB:', error);
                 this.wasm._set_is_dirty(true);
             }
         }
     }
 
     setupEmergencySync() {
-        window.addEventListener('beforeunload', () => {
-            this.syncToDatabase();
-        });
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') {
-                this.syncToDatabase();
-            }
-        });
+        this.window.addEventListener('beforeunload', this.handleBeforeUnload);
+        this.document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    }
+
+    dispose() {
+        this.clearInterval(this.intervalId);
+        this.window.removeEventListener('beforeunload', this.handleBeforeUnload);
+        this.document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     }
 }

@@ -1,18 +1,34 @@
 export class DiskUiManager {
-    constructor(virtualDisk, emulator, onGameLoadedCallback = null) {
-        this.disk = virtualDisk;
-        this.emulator = emulator;
-        this.onGameLoaded = onGameLoadedCallback;
-        this.fileListElement = document.getElementById('file-list');
+    constructor({
+        disk,
+        documentRef,
+        fileListElement,
+        diskHeaderElement,
+        editor,
+        confirmDelete,
+        showAlert,
+        onLoadSource,
+        onRunRom,
+        logger = console
+    }) {
+        this.disk = disk;
+        this.document = documentRef;
+        this.fileListElement = fileListElement;
+        this.diskHeaderElement = diskHeaderElement;
+        this.editor = editor;
+        this.confirmDelete = confirmDelete;
+        this.showAlert = showAlert;
+        this.onLoadSource = onLoadSource;
+        this.onRunRom = onRunRom;
+        this.logger = logger;
     }
 
     refresh() {
         if (!this.fileListElement) return;
 
         const space = this.disk.getDiskSpaceInfo();
-        const header = document.querySelector('#disk-panel .panel-header');
-        if (header) {
-            header.innerHTML = `
+        if (this.diskHeaderElement) {
+            this.diskHeaderElement.innerHTML = `
                 <span>VIRTUAL DISK</span>
                 <span class="disk-stats">Used: ${(space.used / 1024).toFixed(1)} KB / ${(space.total / 1024).toFixed(0)} KB</span>
             `;
@@ -27,27 +43,31 @@ export class DiskUiManager {
         }
 
         files.forEach(file => {
-            const li = document.createElement('li');
+            const li = this.document.createElement('li');
             li.className = 'file-item';
 
-            const infoSpan = document.createElement('span');
+            const infoSpan = this.document.createElement('span');
             infoSpan.className = 'file-info';
             infoSpan.textContent = `${file.name} [${file.size} bytes]`;
 
-            const actionsDiv = document.createElement('div');
+            const actionsDiv = this.document.createElement('div');
             actionsDiv.className = 'file-actions';
 
-            const runBtn = document.createElement('button');
+            const runBtn = this.document.createElement('button');
             runBtn.className = 'run-file-btn';
             runBtn.textContent = 'RUN';
             runBtn.addEventListener('click', () => this.handleFileAction(file.name));
 
-            const deleteBtn = document.createElement('button');
+            const deleteBtn = this.document.createElement('button');
             deleteBtn.className = 'delete-file-btn';
             deleteBtn.textContent = 'DELETE';
             deleteBtn.addEventListener('click', () => {
-                if (confirm(`Delete ${file.name} from the virtual disk?`)) {
-                    this.disk.deleteFile(file.name);
+                if (this.confirmDelete(`Delete ${file.name} from the virtual disk?`)) {
+                    const wasDeleted = this.disk.deleteFile(file.name);
+                    if (!wasDeleted) {
+                        this.showAlert(`Could not delete ${file.name} from the virtual disk.`);
+                        return;
+                    }
                     this.refresh();
                 }
             });
@@ -65,28 +85,20 @@ export class DiskUiManager {
     handleFileAction(filename) {
         const romBytes = this.disk.readFile(filename);
         if (!romBytes || romBytes.length === 0) {
-            alert('Could not read the file from the disk.');
+            this.showAlert('Could not read the file from the disk.');
             return;
         }
 
         if (filename.toLowerCase().endsWith('.asm')) {
             const decoder = new TextDecoder();
             const textCode = decoder.decode(romBytes);
-            
-            const editor = document.getElementById('asm-editor');
-            if (editor) {
-                editor.value = textCode;
-                editor.dispatchEvent(new Event('input')); 
-                console.log(`[VFS UI] Source file ${filename} loaded into the editor.`);
+            if (this.editor) {
+                this.onLoadSource(textCode);
+                this.logger.log(`[VFS UI] Source file ${filename} loaded into the editor.`);
             }
         } else {
-            this.emulator.reset();
-            this.emulator.loadch(romBytes);
-            console.log(`[VFS UI] Binary file ${filename} started successfully.`);
-            
-            if (typeof this.onGameLoaded === 'function') {
-                this.onGameLoaded(filename);
-            }
+            this.onRunRom(romBytes, filename);
+            this.logger.log(`[VFS UI] Binary file ${filename} started successfully.`);
         }
     }
 }

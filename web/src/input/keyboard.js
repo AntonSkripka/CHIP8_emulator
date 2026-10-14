@@ -6,33 +6,34 @@ export const KEY_MAP = {
 };
 
 export class KeyboardInput {
-    constructor(module) {
-        this.module = module;
+    constructor({ setKey, eventTarget = window }) {
+        this.setKey = setKey;
+        this.eventTarget = eventTarget;
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleKeyUp = this.handleKeyUp.bind(this);
     }
 
     attach() {
-        window.addEventListener('keydown', this.handleKeyDown);
-        window.addEventListener('keyup', this.handleKeyUp);
+        this.eventTarget.addEventListener('keydown', this.handleKeyDown);
+        this.eventTarget.addEventListener('keyup', this.handleKeyUp);
     }
 
     detach() {
-        window.removeEventListener('keydown', this.handleKeyDown);
-        window.removeEventListener('keyup', this.handleKeyUp);
+        this.eventTarget.removeEventListener('keydown', this.handleKeyDown);
+        this.eventTarget.removeEventListener('keyup', this.handleKeyUp);
     }
 
     handleKeyDown(event) {
         const keyIndex = KEY_MAP[event.code];
         if (keyIndex !== undefined) {
-            this.module._set_key(keyIndex, 1);
+            this.setKey(keyIndex, 1);
         }
     }
 
     handleKeyUp(event) {
         const keyIndex = KEY_MAP[event.code];
         if (keyIndex !== undefined) {
-            this.module._set_key(keyIndex, 0);
+            this.setKey(keyIndex, 0);
         }
     }
 }

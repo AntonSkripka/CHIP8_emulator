@@ -1,73 +1,76 @@
 export class DropZoneManager {
-    constructor(emulator, virtualDisk, onDiskUpdated = null) {
-        this.emulator = emulator;
-        this.disk = virtualDisk;
+    constructor({
+        dropZone,
+        fileInput,
+        statusElement,
+        eventTarget,
+        onSaveRom,
+        onLoadRom,
+        onDiskUpdated,
+        logger = console
+    }) {
+        this.dropZone = dropZone;
+        this.fileInput = fileInput;
+        this.statusElement = statusElement;
+        this.eventTarget = eventTarget;
+        this.onSaveRom = onSaveRom;
+        this.onLoadRom = onLoadRom;
         this.onDiskUpdated = onDiskUpdated;
-        
-        this.dropZone = document.getElementById('drop-zone');
-        this.fileInput = document.getElementById('file-input');
-        this.statusElement = document.getElementById('drop-zone-status');
-        
-        this.MAX_ROM_SIZE = 3584;
-        this.ROM_START_ADDR = 0x200;
-        
+        this.logger = logger;
+        this.maxRomSize = 3584;
+        this.handleFileDrop = this.handleFileDrop.bind(this);
+        this.handleFileSelect = this.handleFileSelect.bind(this);
         this.setupEventListeners();
     }
 
     setupEventListeners() {
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
-            this.dropZone.addEventListener(event, (e) => this.handleDragEvent(e), false);
-            document.body.addEventListener(event, (e) => this.handleDragEvent(e), false);
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
+            this.dropZone.addEventListener(eventName, this.preventDragDefaults);
+            this.eventTarget.addEventListener(eventName, this.preventDragDefaults);
         });
 
         this.dropZone.addEventListener('dragenter', () => this.highlightDropZone());
         this.dropZone.addEventListener('dragover', () => this.highlightDropZone());
-        this.dropZone.addEventListener('dragleave', (e) => this.handleDragLeave(e));
-        this.dropZone.addEventListener('drop', (e) => this.handleFileDrop(e));
-
+        this.dropZone.addEventListener('dragleave', (event) => this.handleDragLeave(event));
+        this.dropZone.addEventListener('drop', this.handleFileDrop);
         this.dropZone.addEventListener('click', () => this.fileInput.click());
-        this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+        this.fileInput.addEventListener('change', this.handleFileSelect);
     }
 
-    handleDragEvent(e) {
-        e.preventDefault();
-        e.stopPropagation();
+    preventDragDefaults(event) {
+        event.preventDefault();
+        event.stopPropagation();
     }
 
     highlightDropZone() {
         this.dropZone.classList.add('dragover');
     }
 
-    handleDragLeave(e) {
-        if (e.target === this.dropZone) {
+    handleDragLeave(event) {
+        if (event.target === this.dropZone) {
             this.dropZone.classList.remove('dragover');
         }
     }
 
-    handleFileDrop(e) {
+    handleFileDrop(event) {
         this.dropZone.classList.remove('dragover');
-        
-        const files = e.dataTransfer?.files || [];
-        if (files.length > 0) {
-            this.processFile(files[0]);
-        }
+        const [file] = event.dataTransfer?.files ?? [];
+        if (file) this.processFile(file);
     }
 
-    handleFileSelect(e) {
-        const files = e.target.files || [];
-        if (files.length > 0) {
-            this.processFile(files[0]);
-        }
+    handleFileSelect(event) {
+        const [file] = event.target.files ?? [];
+        if (file) this.processFile(file);
         this.fileInput.value = '';
     }
 
-    processFile(file) {
+    async processFile(file) {
         if (!this.isValidRomFile(file.name)) {
             this.showStatus(`✗ Invalid format: ${file.name}`, 'error');
             return;
         }
 
-        if (file.size > this.MAX_ROM_SIZE) {
+        if (file.size > this.maxRomSize) {
             this.showStatus(`✗ File too large (${file.size} bytes)`, 'error');
             return;
         }
@@ -79,38 +82,20 @@ export class DropZoneManager {
 
         this.showStatus('Loading...', 'loading');
 
-        const reader = new FileReader();
-
-        reader.onload = (event) => {
-            try {
-                const buffer = event.target.result;
-                const uint8Array = new Uint8Array(buffer);
-                const isSaved = this.disk.writeFile(file.name, uint8Array);
-                
-                if (!isSaved) {
-                    this.showStatus('✗ VFS Write Failed (No Space?)', 'error');
-                    return;
-                }
-
-                this.emulator.reset();
-                this.emulator.loadch(uint8Array);
-
-                this.showStatus(`✓ Saved & Loaded: ${file.name}`, 'success');
-
-                if (typeof this.onDiskUpdated === 'function') {
-                    this.onDiskUpdated();
-                }
-            } catch (error) {
-                console.error('Error loading ROM:', error);
-                this.showStatus('✗ Load failed', 'error');
+        try {
+            const rom = new Uint8Array(await file.arrayBuffer());
+            if (!this.onSaveRom(file.name, rom)) {
+                this.showStatus('✗ VFS write failed (not enough space?)', 'error');
+                return;
             }
-        };
 
-        reader.onerror = () => {
-            this.showStatus('✗ Read error', 'error');
-        };
-
-        reader.readAsArrayBuffer(file);
+            this.onLoadRom(rom);
+            this.showStatus(`✓ Saved & loaded: ${file.name}`, 'success');
+            this.onDiskUpdated();
+        } catch (error) {
+            this.logger.error('Error loading ROM:', error);
+            this.showStatus('✗ Load failed', 'error');
+        }
     }
 
     isValidRomFile(filename) {
@@ -128,8 +113,4 @@ export class DropZoneManager {
             }, 2000);
         }
     }
-}
-
-export function initializeDropZone(emulator, virtualDisk, onDiskUpdated) {
-    return new DropZoneManager(emulator, virtualDisk, onDiskUpdated);
 }

@@ -1,6 +1,7 @@
 export class VirtualDisk {
-    constructor(wasmModule) {
+    constructor(wasmModule, { logger = console } = {}) {
         this.wasm = wasmModule;
+        this.logger = logger;
     }
 
     _allocateString(str) {
@@ -25,12 +26,12 @@ export class VirtualDisk {
             const result = this.wasm._vfs_write(namePtr, dataPtr, fileBytes.length);
 
             if (result === 0) {
-                console.log(`File ${filename} saved.`);
+                this.logger.log(`File ${filename} saved.`);
                 return true;
             } else if (result === -1) {
-                console.error(`Failed to save ${filename}: not enough disk space.`);
+                this.logger.error(`Failed to save ${filename}: not enough disk space.`);
             } else if (result === -2) {
-                console.error(`Failed to save ${filename}: the file limit has been reached (maximum 64 files).`);
+                this.logger.error(`Failed to save ${filename}: the file limit has been reached (maximum 64 files).`);
             }
             return false;
         } finally {
@@ -47,7 +48,7 @@ export class VirtualDisk {
             namePtr = this._allocateString(filename);
             const size = this.wasm._vfs_get_file_size(namePtr);
             if (size === 0) {
-                console.warn(`File ${filename} was not found on the disk.`);
+                this.logger.warn(`File ${filename} was not found on the disk.`);
                 return null;
             }
 
@@ -70,7 +71,7 @@ export class VirtualDisk {
             const result = this.wasm._vfs_delete(namePtr);
             return result === 0;
         } catch (err) {
-            console.error(`Failed to delete file ${filename}:`, err);
+            this.logger.error(`Failed to delete file ${filename}:`, err);
             return false;
         } finally {
             if (namePtr) this.wasm._free(namePtr);
@@ -89,7 +90,6 @@ export class VirtualDisk {
 
             if (isUsed === 1) {
                 const nameBytes = new Uint8Array(this.wasm.HEAPU8.buffer, entryPtr, 18);
-                const decoder = new TextEncoder();
                 let name = new TextDecoder().decode(nameBytes);
                 const nullIdx = name.indexOf('\0');
                 if (nullIdx !== -1) name = name.substring(0, nullIdx);
