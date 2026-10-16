@@ -11,7 +11,21 @@ ROMs: The "Pong" game included in this repository is a classic 1970s implementat
 
 Copyright: All rights to the original game logic and assets belong to their respective creators.<br>
 
-Removal: If you are the copyright holder of any code included here and wish for it to be removed, please open an Issue or contact me, and I will delete it immediately.
+Removal: If you are the copyright holder of any material included here and wish for it to be removed, please open an Issue in this repository and I will remove it immediately.
+
+---
+
+## Credits, Licensing & Attributions
+
+The CHIP-8 ROM catalogue is sourced from [The Chip8 Archive](https://github.com/JohnEarnest/chip8Archive), maintained by John Earnest. Thank you to John Earnest, the archive contributors, and the independent authors who created and shared freely licensed CHIP-8 software. Any additional ROM collections will be credited individually when added; no other external ROM collection is currently bundled.
+
+The upstream archive states that its contributed programs and materials are released under the **Creative Commons Zero v1.0 Universal (CC0 1.0)** dedication. The retained catalogue ROMs, descriptions, and preview media are included under CC0 1.0 or as public-domain material in reliance on that upstream licensing statement. This project does not claim authorship of those contributions and has not independently verified every historical contributor's chain of title.
+
+This project is provided for educational and historical purposes. That purpose does not grant copyright permission, and the age or unmaintained status of a work ("abandonware") does not by itself place it in the public domain. Rights holders may request removal at any time.
+
+**If you are the rights holder of any material included here and would like it removed, please create an Issue in this GitHub repository, and the content will be removed immediately.**
+
+The prepared catalogue data is in `web/public/roms/`: `programs.json` and `authors.json` are at its root, game binaries are in `roms/`, and previews are in `media/`. Image paths in `programs.json` are relative to that data root.
 
 ---
 
@@ -22,6 +36,7 @@ Removal: If you are the copyright holder of any code included here and wish for 
 * **Blazing Fast Rendering:** Direct memory sharing between WebAssembly and the JavaScript frontend using `Uint8ClampedArray` for seamless 60 FPS rendering.
 * **Web-Based IDE:** Integrated assembler, live register trackers, stack monitors, and memory visualization tools.
 * **Local Storage OS:** A menu-driven interface to manage, save, and browse multiple ROMs directly inside the browser's storage.
+* **React Game Store:** Browse the bundled CHIP-8 catalogue, preview games, launch ROMs, download them, or add them to the virtual disk.
 
 ---
 
@@ -64,10 +79,10 @@ In **Settings → Actions → General**, allow **Read and write permissions** so
 - `dist/`: Vite production output
 
 ### Application architecture
-`web/src/app/main.js` is the composition root: it creates infrastructure adapters and injects them into the UI and emulator components. The emulator controller depends on the core, display, monitor, memory-map view, and scheduler through constructor dependencies. Disk and ROM UI components communicate with emulator actions through callbacks rather than importing or invoking the emulator directly. Browser APIs, assembly compilation, and IndexedDB access are injected at the application boundary.
+`web/src/app/main.js` is the composition root: it creates infrastructure adapters and injects them into the UI and emulator components. The emulator controller depends on the core, display, monitor, memory-map view, and scheduler through constructor dependencies. Disk and ROM UI components communicate with emulator actions through callbacks rather than importing or invoking the emulator directly. Browser APIs, assembly compilation, and IndexedDB access are injected at the application boundary. The React catalogue is mounted from the main menu and uses `web/src/shop/emulator_bridge.js` to call the existing emulator and virtual-disk APIs.
 
 ### Terminal interface
-The browser UI opens with a BIOS-style boot sequence and keyboard-operated main menu. User Mode presents the CHIP-8 display and ROM loader; Developer Mode adds the assembler, register and stack monitors, memory map, and virtual disk. Settings offer monochrome, green phosphor, amber, and blue palettes, with the selected theme persisted in `localStorage`. The terminal navigation and theme manager live in `web/src/ui/terminal_shell.js` and `web/src/themes/`; shared palette tokens are in `web/styles/themes.css`.
+The browser UI opens with a BIOS-style boot sequence and keyboard-operated main menu. User Mode presents the CHIP-8 display and ROM loader; Developer Mode adds the assembler, register and stack monitors, memory map, and virtual disk. The Game Store lists the bundled catalogue at `web/public/roms/programs.json`, with author details in `authors.json`, ROMs in `roms/`, and previews in `media/`. Settings offer monochrome, green phosphor, amber, and blue palettes, with the selected theme persisted in `localStorage`. The terminal navigation and theme manager live in `web/src/ui/terminal_shell.js` and `web/src/themes/`; shared palette tokens are in `web/styles/themes.css`, which also themes the React store.
 
 ---
 

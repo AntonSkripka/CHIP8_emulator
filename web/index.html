@@ -35,7 +35,7 @@
         <section id="home-screen" class="screen terminal-window" aria-labelledby="home-title" hidden>
             <header class="terminal-heading">
                 <span>CHIP-8 VIRTUAL</span>
-                <span>BUILD 0.21</span>
+                <span>BUILD 0.24</span>
             </header>
             <div class="terminal-content">
                 <pre class="menu-logo" aria-hidden="true">╔══════════════════════════════════════╗
@@ -52,13 +52,17 @@
                         <span class="menu-cursor" aria-hidden="true">&nbsp;</span>
                         <span>[2] DEVELOPER MODE</span>
                     </button>
-                    <button class="menu-option" data-menu-index="2" data-action="settings">
+                    <button class="menu-option" data-menu-index="2" data-action="shop">
                         <span class="menu-cursor" aria-hidden="true">&nbsp;</span>
-                        <span>[3] SETTINGS</span>
+                        <span>[3] GAME STORE</span>
                     </button>
-                    <button class="menu-option" data-menu-index="3" data-action="about">
+                    <button class="menu-option" data-menu-index="3" data-action="settings">
                         <span class="menu-cursor" aria-hidden="true">&nbsp;</span>
-                        <span>[4] ABOUT</span>
+                        <span>[4] SETTINGS</span>
+                    </button>
+                    <button class="menu-option" data-menu-index="4" data-action="about">
+                        <span class="menu-cursor" aria-hidden="true">&nbsp;</span>
+                        <span>[5] ABOUT</span>
                     </button>
                 </nav>
                 <p class="navigation-hint">[↑/↓] SELECT &nbsp; [ENTER] CONFIRM</p>
@@ -200,6 +204,19 @@
                 </div>
                 <input type="file" id="file-input" accept=".ch8" hidden>
             </div>
+        </section>
+        <section id="shop-screen" class="screen shop-screen" aria-labelledby="shop-title" hidden>
+            <header class="shop-shell-heading">
+                <div>
+                    <p class="eyebrow">CHIP-8 VIRTUAL MACHINE</p>
+                    <h1 id="shop-title">GAME STORE</h1>
+                </div>
+                <button class="terminal-button" data-action="home">[ ESC ] MAIN MENU</button>
+            </header>
+            <p id="game-store-status" class="game-store-status" role="status" aria-live="polite">
+                CONNECTING TO GAME STORE...
+            </p>
+            <div id="game-store-root"></div>
         </section>
     </main>
     <script type="module" src="./src/ui/terminal_shell.js"></script>

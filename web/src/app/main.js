@@ -146,7 +146,18 @@ export async function startApplication({
     });
 
     emulator.start();
-    return { core, display, emulator, disk, diskUi, editorManager, keyboard, dropZone, storage };
+    return {
+        core,
+        display,
+        emulator,
+        disk,
+        diskUi,
+        editorManager,
+        keyboard,
+        dropZone,
+        storage,
+        refreshDisk
+    };
 }
 
 function saveAssembly({ editor, editorManager, filenameInput, statusElement, disk, refreshDisk, encoder, showAlert }) {
