@@ -13,7 +13,6 @@ import { DiskUiManager } from '../ui/disk_ui.js';
 import { EmulatorMonitor } from '../ui/emulator_monitor.js';
 import { EditorManager } from '../ui/editor_manager.js';
 import { MemoryMapView } from '../ui/memory_map_view.js';
-
 export async function startApplication({
     documentRef,
     windowRef,

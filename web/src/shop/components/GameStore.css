@@ -75,7 +75,7 @@
     border: 1px solid var(--border-color);
     background: var(--surface-color);
     box-shadow: inset 0 0 12px var(--shadow-color);
-    transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
 }
 
 .game-card:hover {
@@ -97,6 +97,11 @@
     text-align: left;
 }
 
+.game-card-button:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
 .game-card-image-wrap {
     display: grid;
     width: 100%;
@@ -113,7 +118,7 @@
     height: 100%;
     object-fit: contain;
     filter: grayscale(1) sepia(0.75) hue-rotate(var(--shop-image-hue, 75deg)) saturate(1.45) contrast(1.12);
-    transition: filter 150ms ease, transform 180ms ease;
+    transition: filter 250ms ease, transform 250ms ease;
 }
 
 .game-card:hover .game-card-image {
@@ -179,12 +184,19 @@
     display: flex;
     justify-content: flex-end;
     background: rgb(0 0 0 / 72%);
+    animation: gameDetailsBackdropIn 250ms ease both;
+}
+
+.game-details-backdrop.is-closing {
+    animation-name: gameDetailsBackdropOut;
+    pointer-events: auto;
 }
 
 .game-details-panel {
     display: flex;
     width: min(50vw, 780px);
-    height: 100%;
+    height: 100vh;
+    height: 100dvh;
     flex-direction: column;
     padding: clamp(16px, 3vw, 30px);
     overflow-y: auto;
@@ -192,6 +204,21 @@
     color: var(--text-color);
     background: var(--surface-color);
     box-shadow: -12px 0 32px var(--shadow-color);
+    animation: gameDetailsPanelIn 250ms ease both;
+}
+
+.game-details-backdrop.is-closing .game-details-panel {
+    animation-name: gameDetailsPanelOut;
+    pointer-events: none;
+}
+
+.game-details-panel button {
+    transition: color 250ms ease, background-color 250ms ease, border-color 250ms ease,
+        box-shadow 250ms ease, transform 250ms ease;
+}
+
+.game-details-panel button:hover:not(:disabled) {
+    transform: translateY(-1px);
 }
 
 .game-details-header {
@@ -297,6 +324,46 @@
 .game-details-actions button:disabled {
     cursor: not-allowed;
     opacity: 0.6;
+}
+
+@keyframes gameDetailsBackdropIn {
+    from {
+        background-color: rgb(0 0 0 / 0%);
+    }
+    to {
+        background-color: rgb(0 0 0 / 72%);
+    }
+}
+
+@keyframes gameDetailsBackdropOut {
+    from {
+        background-color: rgb(0 0 0 / 72%);
+    }
+    to {
+        background-color: rgb(0 0 0 / 0%);
+    }
+}
+
+@keyframes gameDetailsPanelIn {
+    from {
+        opacity: 0;
+        transform: translateX(32px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes gameDetailsPanelOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(32px);
+    }
 }
 
 :root[data-theme="amber"] {

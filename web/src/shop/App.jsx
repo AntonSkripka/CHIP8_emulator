@@ -6,6 +6,7 @@ import './components/GameStore.css';
 export default function App({ bridge }) {
     const [catalog, setCatalog] = useState(null);
     const [selectedSlug, setSelectedSlug] = useState(null);
+    const [isDetailsClosing, setIsDetailsClosing] = useState(false);
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
 
@@ -35,16 +36,44 @@ export default function App({ bridge }) {
         : null;
 
     useEffect(() => {
-        if (!selectedGame) return undefined;
+        if (!selectedSlug) return undefined;
+
+        const root = document.documentElement;
+        const scrollY = window.scrollY;
+        const previousOverflow = root.style.overflow;
+        root.style.overflow = 'hidden';
+
+        return () => {
+            root.style.overflow = previousOverflow;
+            const shopScreen = document.getElementById('shop-screen');
+            window.scrollTo(0, shopScreen && !shopScreen.hidden ? scrollY : 0);
+        };
+    }, [selectedSlug]);
+
+    useEffect(() => {
+        if (!selectedSlug || isDetailsClosing) return undefined;
         const handleKeyDown = (event) => {
             if (event.key === 'Escape') {
-                setSelectedSlug(null);
-                setError('');
+                event.preventDefault();
+                event.stopPropagation();
+                closeDetails();
             }
         };
         document.addEventListener('keydown', handleKeyDown, true);
         return () => document.removeEventListener('keydown', handleKeyDown, true);
-    }, [selectedGame]);
+    }, [selectedSlug, isDetailsClosing]);
+
+    function closeDetails() {
+        if (selectedSlug && !isDetailsClosing) {
+            setIsDetailsClosing(true);
+            setError('');
+        }
+    }
+
+    function finishClosingDetails() {
+        setSelectedSlug(null);
+        setIsDetailsClosing(false);
+    }
 
     async function performAction(action) {
         setError('');
@@ -80,6 +109,7 @@ export default function App({ bridge }) {
                             imageUrl={game.images?.[0] ? bridge.assetUrl(game.images[0]) : ''}
                             onSelect={() => {
                                 setError('');
+                                setIsDetailsClosing(false);
                                 setSelectedSlug(game.slug);
                             }}
                         />
@@ -96,14 +126,17 @@ export default function App({ bridge }) {
                     imageUrl={selectedGame.images?.[0] ? bridge.assetUrl(selectedGame.images[0]) : ''}
                     busy={busy}
                     error={error}
-                    onClose={() => {
-                        setSelectedSlug(null);
-                        setError('');
+                    isClosing={isDetailsClosing}
+                    onClose={closeDetails}
+                    onAnimationEnd={(event) => {
+                        if (event.animationName === 'gameDetailsBackdropOut') {
+                            finishClosingDetails();
+                        }
                     }}
                     onSave={() => performAction(() => bridge.saveGame(selectedGame.slug))}
                     onLoad={() => performAction(async () => {
                         await bridge.loadGame(selectedGame.slug);
-                        setSelectedSlug(null);
+                        closeDetails();
                     })}
                 />
             )}

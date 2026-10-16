@@ -5,38 +5,10 @@
 }
 
 html {
-    overflow-y: scroll;
-}
-
-*::-webkit-scrollbar {
-    width: 14px;
-    height: 14px;
-}
-
-*::-webkit-scrollbar-track {
-    border: 1px solid var(--border-color);
-    background-color: var(--surface-raised);
-    background-image: repeating-linear-gradient(
-        0deg,
-        transparent 0 3px,
-        var(--shadow-color) 3px 4px
-    );
-}
-
-*::-webkit-scrollbar-thumb {
-    min-height: 28px;
-    border: 3px solid var(--surface-raised);
-    border-radius: 0;
-    background-color: var(--accent-color);
-    box-shadow: inset 1px 1px var(--text-color), inset -1px -1px var(--border-color);
-}
-
-*::-webkit-scrollbar-thumb:hover {
-    background-color: var(--text-color);
-}
-
-*::-webkit-scrollbar-corner {
-    background: var(--surface-raised);
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 :root {
@@ -52,7 +24,7 @@ body {
     min-width: 320px;
     min-height: 100vh;
     margin: 0;
-    overflow-x: hidden;
+    overflow: visible;
     color: var(--text-color);
     background: var(--background-color);
     font-size: 1.15rem;
@@ -118,6 +90,7 @@ textarea:focus-visible,
     min-height: 100vh;
     margin: 0 auto;
     padding: 28px 24px 36px;
+    overflow: visible;
 }
 
 .screen {
@@ -241,8 +214,8 @@ textarea:focus-visible,
     background: transparent;
     cursor: pointer;
     text-align: left;
-    transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease,
-        transform 140ms ease;
+    transition: color 250ms ease, background-color 250ms ease, border-color 250ms ease,
+        box-shadow 250ms ease, transform 250ms ease;
 }
 
 .menu-option {
@@ -266,6 +239,7 @@ textarea:focus-visible,
 .menu-option:hover,
 .theme-option:hover {
     box-shadow: inset 0 0 12px var(--shadow-color);
+    transform: translateX(2px);
 }
 
 .menu-cursor {
@@ -355,6 +329,7 @@ textarea:focus-visible,
     color: var(--background-color);
     text-shadow: none;
     box-shadow: 0 0 12px var(--shadow-color);
+    transform: translateY(-1px);
 }
 
 .back-button {
@@ -617,8 +592,9 @@ textarea:focus-visible,
 .editor-wrapper {
     position: relative;
     display: flex;
+    height: 230px;
     min-height: 230px;
-    flex: 1;
+    flex: 0 0 230px;
     overflow: hidden;
     border: 1px solid var(--border-color);
     background: var(--background-color);
@@ -640,13 +616,17 @@ textarea:focus-visible,
     line-height: 1.2;
 }
 
+.line-number-content {
+    will-change: transform;
+}
+
 #asm-highlight {
     position: absolute;
     z-index: 99;
     inset: 0 0 0 38px;
     margin: 0;
     padding: 8px;
-    overflow: auto;
+    overflow: hidden;
     color: var(--text-color);
     pointer-events: none;
     scrollbar-width: none;
@@ -655,19 +635,16 @@ textarea:focus-visible,
     line-height: 1.2;
 }
 
-#asm-highlight::-webkit-scrollbar {
-    display: none;
-}
-
 #asm-editor {
     position: relative;
     z-index: 3;
     min-width: 0;
-    min-height: 100%;
+    height: 100%;
+    min-height: 0;
     flex: 1;
     margin: 0;
     padding: 8px;
-    resize: vertical;
+    resize: none;
     border: 0;
     outline: 0;
     background: transparent;
@@ -720,7 +697,7 @@ textarea:focus-visible,
     padding: 5px 8px;
     border: 1px solid var(--border-color);
     background: var(--surface-raised);
-    transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+    transition: border-color 250ms ease, background-color 250ms ease, box-shadow 250ms ease;
 }
 
 .file-item:hover {
@@ -745,7 +722,8 @@ textarea:focus-visible,
     border: 1px solid var(--border-color);
     background: var(--surface-color);
     cursor: pointer;
-    transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    transition: color 250ms ease, background-color 250ms ease, border-color 250ms ease,
+        box-shadow 250ms ease, transform 250ms ease;
 }
 
 .run-file-btn {
@@ -757,6 +735,7 @@ textarea:focus-visible,
     background: var(--accent-color);
     color: var(--background-color);
     box-shadow: 0 0 10px var(--shadow-color);
+    transform: translateY(-1px);
 }
 
 .delete-file-btn {
@@ -768,6 +747,7 @@ textarea:focus-visible,
     background: #ff6666;
     color: var(--background-color);
     box-shadow: 0 0 10px rgb(255 102 102 / 35%);
+    transform: translateY(-1px);
 }
 
 .empty-disk {
@@ -786,13 +766,17 @@ textarea:focus-visible,
     background: var(--surface-color);
     cursor: pointer;
     text-align: center;
-    transition: box-shadow 160ms ease, background-color 160ms ease;
+    transition: box-shadow 250ms ease, background-color 250ms ease, transform 250ms ease;
 }
 
 #drop-zone:hover,
 #drop-zone.dragover {
     background: var(--surface-raised);
     box-shadow: inset 0 0 18px var(--shadow-color);
+}
+
+#drop-zone:hover {
+    transform: scale(1.005);
 }
 
 #drop-zone-title {

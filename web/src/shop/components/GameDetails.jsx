@@ -1,15 +1,31 @@
+import { createPortal } from 'react-dom';
 import { authorLine, releaseDate } from '../utils/catalog.js';
 
 const DISPLAYED_FIELDS = new Set(['title', 'authors', 'images', 'desc', 'howto', 'release', 'options']);
 
-export function GameDetails({ game, authors, imageUrl, busy, error, onClose, onSave, onLoad }) {
+export function GameDetails({
+    game,
+    authors,
+    imageUrl,
+    busy,
+    error,
+    isClosing,
+    onClose,
+    onAnimationEnd,
+    onSave,
+    onLoad
+}) {
     const additionalDetails = Object.entries(game).filter(([key]) => !DISPLAYED_FIELDS.has(key));
     const supportsEmulator = !game.platform || game.platform.toLowerCase() === 'chip8';
 
-    return (
-        <div className="game-details-backdrop" onMouseDown={(event) => {
-            if (event.target === event.currentTarget) onClose();
-        }}>
+    return createPortal(
+        <div
+            className={`game-details-backdrop${isClosing ? ' is-closing' : ''}`}
+            onMouseDown={(event) => {
+                if (event.target === event.currentTarget) onClose();
+            }}
+            onAnimationEnd={onAnimationEnd}
+        >
             <aside className="game-details-panel" role="dialog" aria-modal="true" aria-labelledby="game-details-title">
                 <header className="game-details-header">
                     <div>
@@ -63,7 +79,8 @@ export function GameDetails({ game, authors, imageUrl, busy, error, onClose, onS
                     </button>
                 </div>
             </aside>
-        </div>
+        </div>,
+        document.body
     );
 }
 

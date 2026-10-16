@@ -63,7 +63,7 @@ documentRef.addEventListener('keydown', (event) => {
     }
 
     if (currentScreen === 'shop' && event.key === 'Escape' &&
-        documentRef.querySelector('#game-store-root [role="dialog"][aria-modal="true"]')) {
+        documentRef.querySelector('[role="dialog"][aria-modal="true"]')) {
         return;
     }
 
@@ -131,6 +131,7 @@ function createStarField() {
 }
 
 function showScreen(name) {
+    if (currentScreen !== name) documentRef.scrollingElement.scrollTop = 0;
     currentScreen = name;
     screens.forEach((screen) => {
         screen.hidden = screen.id !== `${name}-screen`;

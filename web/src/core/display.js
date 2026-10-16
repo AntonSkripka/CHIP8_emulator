@@ -22,6 +22,7 @@ export class Chip8Display {
     }
 
     clear() {
+        this.imageData.data.fill(0);
         this.ctx.fillStyle = 'black';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }

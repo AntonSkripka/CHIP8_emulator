@@ -34,7 +34,12 @@ export class EditorManager {
     updateLineNumbers() {
         if (!this.lineNumbers || !this.editor) return;
         const lineCount = this.editor.value.split('\n').length;
-        this.lineNumbers.innerHTML = Array.from({ length: lineCount }, (_, index) => index + 1).join('<br>');
+        this.lineNumbers.innerHTML = `<div class="line-number-content">${Array.from(
+            { length: lineCount },
+            (_, index) => index + 1
+        ).join('<br>')}</div>`;
+        this.lineNumberContent = this.lineNumbers.firstElementChild;
+        this.syncHighlightScroll();
     }
 
     updateHighlight() {
@@ -47,5 +52,8 @@ export class EditorManager {
         if (!this.highlightOverlay || !this.editor) return;
         this.highlightOverlay.scrollTop = this.editor.scrollTop;
         this.highlightOverlay.scrollLeft = this.editor.scrollLeft;
+        if (this.lineNumberContent) {
+            this.lineNumberContent.style.transform = `translateY(-${this.editor.scrollTop}px)`;
+        }
     }
 }
