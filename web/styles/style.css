@@ -61,26 +61,12 @@ textarea:focus-visible,
     pointer-events: none;
 }
 
-.background-star {
+.animated-background-canvas {
     position: absolute;
-    color: var(--text-color);
-    opacity: 0.11;
-    font-size: clamp(12px, 2vw, 25px);
-    line-height: 1;
-    transition: color 550ms ease, opacity 550ms ease, text-shadow 550ms ease;
-}
-
-.background-star.star-illuminate {
-    color: var(--accent-color);
-    opacity: 0.38;
-    text-shadow: var(--glow-effect);
-    transition-delay: var(--star-delay);
-}
-
-.background-star.star-extinguish {
-    opacity: 0;
-    transform: scale(0.4);
-    transition-delay: var(--star-delay);
+    z-index: 0;
+    inset: 0;
+    display: block;
+    max-width: none;
 }
 
 #terminal-shell {

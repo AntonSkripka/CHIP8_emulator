@@ -1,6 +1,7 @@
 import { startApplication } from '../app/main.js';
 import { THEMES, ThemeManager } from '../themes/theme_manager.js';
 import { EmulatorBridge } from '../shop/services/emulator_bridge.js';
+import { AnimatedBackground } from './animated_background.js';
 
 const documentRef = document;
 const windowRef = window;
@@ -17,7 +18,11 @@ const shopScreen = documentRef.getElementById('shop-screen');
 const screens = [bootScreen, homeScreen, settingsScreen, aboutScreen, emulatorScreen, shopScreen];
 const menuOptions = [...documentRef.querySelectorAll('.menu-option')];
 const themeOptions = [...documentRef.querySelectorAll('.theme-option')];
-const stars = createStarField();
+new AnimatedBackground({
+    container: documentRef.getElementById('terminal-background'),
+    documentRef,
+    windowRef
+});
 let currentScreen = 'boot';
 let selectedMenuIndex = 0;
 let selectedThemeIndex = THEMES.indexOf(themeManager.getTheme());
@@ -96,38 +101,10 @@ function animateBoot() {
             windowRef.clearInterval(timer);
             windowRef.setTimeout(() => {
                 bootScreen.classList.add('boot-complete');
-                stars.forEach((star, index) => {
-                    if (index % 3 === 0) {
-                        star.classList.add('star-extinguish');
-                    } else {
-                        star.classList.add('star-illuminate');
-                    }
-                });
                 windowRef.setTimeout(() => showScreen('home'), 450);
             }, 180);
         }
     }, 95);
-}
-
-function createStarField() {
-    const background = documentRef.getElementById('terminal-background');
-    const fragment = documentRef.createDocumentFragment();
-    const starCount = 110;
-    const result = [];
-
-    for (let index = 0; index < starCount; index += 1) {
-        const star = documentRef.createElement('span');
-        star.className = 'background-star';
-        star.textContent = '*';
-        star.style.left = `${Math.random() * 100}%`;
-        star.style.top = `${Math.random() * 100}%`;
-        star.style.setProperty('--star-delay', `${Math.random() * 1.4}s`);
-        fragment.appendChild(star);
-        result.push(star);
-    }
-
-    background.appendChild(fragment);
-    return result;
 }
 
 function showScreen(name) {
