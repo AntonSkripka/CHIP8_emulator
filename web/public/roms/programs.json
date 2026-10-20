@@ -966,7 +966,11 @@
 		"options": {
 			"tickrate": "7",
 			"fillColor": "#330033",
-			"backgroundColor": "#AAAAFF"
+			"backgroundColor": "#AAAAFF",
+			"shiftQuirks": true,
+			"loadStoreQuirks": true,
+			"subEqualityQuirk": true,
+			"addIPreserveVFQuirk": true
 		}
 	},
 	"civiliz8n": {

@@ -55,9 +55,9 @@ void stack_popa()
     if (!remote_v_regs) {
         return;
     }
-    if (spd > 15) {
+    if (spd >= 16) {
         for (int i = 16; i > 0; i--) {
-            remote_v_regs[i] = stack[--spd];
+            remote_v_regs[i - 1] = stack[--spd];
         }
     }
 }

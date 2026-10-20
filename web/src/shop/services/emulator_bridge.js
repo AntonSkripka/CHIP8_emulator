@@ -37,10 +37,10 @@ export class EmulatorBridge {
         return { programs, authors };
     }
 
-    async loadGame(slug) {
+    async loadGame(slug, options = {}) {
         const bytes = await this.fetchRom(slug);
         this.emulator.reset();
-        this.emulator.loadRom(bytes);
+        this.emulator.loadRom(bytes, options);
         this.onLaunch();
     }
 

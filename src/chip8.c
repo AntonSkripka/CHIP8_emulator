@@ -63,6 +63,19 @@ void set_key(int key, bool is_pressed)
 }
 
 EMSCRIPTEN_KEEPALIVE
+void set_quirks(
+    bool shift_quirks,
+    bool load_store_quirks,
+    bool sub_equality_quirk,
+    bool add_i_preserve_vf_quirk)
+{
+    instance.shift_quirks = shift_quirks;
+    instance.load_store_quirks = load_store_quirks;
+    instance.sub_equality_quirk = sub_equality_quirk;
+    instance.add_i_preserve_vf_quirk = add_i_preserve_vf_quirk;
+}
+
+EMSCRIPTEN_KEEPALIVE
 void update_timers()
 {
     if (instance.delay_timer > 0)
@@ -109,21 +122,7 @@ void step()
     case 0x3000: if (instance.V[x] == kk) instance.pc += 2; break;
     case 0x4000: if (instance.V[x] != kk) instance.pc += 2; break;
     case 0x5000:
-        if (kk == 0x01) {
-            stack_push(x);
-        } else if (kk == 0x02) {
-            stack_pop(x);
-        } else if (kk == 0x03) {
-            stack_pusha();
-        } else if (kk == 0x04) {
-            stack_popa();
-        } else if (kk == 0x05) {
-            stack_peak(x);
-        } else if (kk == 0x06) {
-            stack_size(x);
-        } else if (kk == 0x07) {
-            stack_clear();
-        } else if (instance.V[x] == instance.V[y]) {
+        if ((opcode & 0x000F) == 0 && instance.V[x] == instance.V[y]) {
             instance.pc += 2;
         }
         break;
@@ -138,49 +137,81 @@ void step()
             case 0x3: instance.V[x] ^= instance.V[y]; break; 
             case 0x4: { 
                 uint16_t sum = (uint16_t)instance.V[x] + (uint16_t)instance.V[y];
-                instance.V[0xF] = (sum > 255) ? 1 : 0;
-                instance.V[x] = sum & 0xFF;
+                instance.V[x] = (uint8_t)sum;
+                instance.V[0xF] = (sum > 0xFF) ? 1 : 0;
                 break; 
             }
-            case 0x5: 
-                instance.V[0xF] = (instance.V[x] >= instance.V[y]) ? 1 : 0;
-                instance.V[x] -= instance.V[y];
+            case 0x5: {
+                uint8_t vx = instance.V[x];
+                uint8_t vy = instance.V[y];
+                instance.V[x] = vx - vy;
+                instance.V[0xF] = (vx > vy || (instance.sub_equality_quirk && vx == vy)) ? 1 : 0;
                 break;
-            case 0x6: 
-                instance.V[0xF] = instance.V[x] & 0x1;
-                instance.V[x] >>= 1;
+            }
+            case 0x6: {
+                uint8_t value = instance.V[instance.shift_quirks ? x : y];
+                instance.V[x] = value >> 1;
+                instance.V[0xF] = value & 0x1;
                 break;
-            case 0x7: 
-                instance.V[0xF] = (instance.V[y] >= instance.V[x]) ? 1 : 0;
-                instance.V[x] = instance.V[y] - instance.V[x];
+            }
+            case 0x7: {
+                uint8_t vx = instance.V[x];
+                uint8_t vy = instance.V[y];
+                instance.V[x] = vy - vx;
+                instance.V[0xF] = (vy > vx) ? 1 : 0;
                 break;
-            case 0xE: 
-                instance.V[0xF] = (instance.V[x] >> 7) & 0x1;
-                instance.V[x] <<= 1;
+            }
+            case 0xE: {
+                uint8_t value = instance.V[instance.shift_quirks ? x : y];
+                instance.V[x] = value << 1;
+                instance.V[0xF] = (value >> 7) & 0x1;
                 break;
-
-            case 0x9: math_mul(x, y); break;
-            case 0xA: math_div(x, y); break;
-            case 0xB: math_rem(x, y); break;
+            }
         }
         break;
 
-    case 0x9000: if (instance.V[x] != instance.V[y]) instance.pc += 2; break;
+    case 0x9000:
+        if ((opcode & 0x000F) == 0 && instance.V[x] != instance.V[y]) {
+            instance.pc += 2;
+        }
+        break;
     case 0xA000: instance.I = nnn; break;
+    case 0xB000: instance.pc = nnn + instance.V[0]; break;
     case 0xC000: instance.V[x] = (rand() % 256) & kk; break;
     case 0xD000: render_sprite(&instance, x, y, opcode & 0x000F); break;
 
     case 0xE000:
-        if (kk == 0x9E) { if (instance.keypad[instance.V[x]]) instance.pc += 2; }
-        else if (kk == 0xA1) { if (!instance.keypad[instance.V[x]]) instance.pc += 2; }
+        if (kk == 0x9E && instance.V[x] < 16) {
+            if (instance.keypad[instance.V[x]]) instance.pc += 2;
+        } else if (kk == 0xA1 && instance.V[x] < 16) {
+            if (!instance.keypad[instance.V[x]]) instance.pc += 2;
+        }
         break;
 
     case 0xF000:
         switch (kk) {
             case 0x07: instance.V[x] = instance.delay_timer; break;
             case 0x15: instance.delay_timer = instance.V[x]; break; 
-            case 0x18: instance.sound_timer = instance.V[x]; break; 
-            case 0x1E: instance.I += instance.V[x]; break; 
+            case 0x0A: {
+                bool key_pressed = false;
+                for (uint8_t key = 0; key < 16; key++) {
+                    if (instance.keypad[key]) {
+                        instance.V[x] = key;
+                        key_pressed = true;
+                        break;
+                    }
+                }
+                if (!key_pressed) instance.pc -= 2;
+                break;
+            }
+            case 0x1E: {
+                uint32_t sum = (uint32_t)instance.I + instance.V[x];
+                instance.I = (uint16_t)sum;
+                if (!instance.add_i_preserve_vf_quirk) {
+                    instance.V[0xF] = (sum > 0x0FFF) ? 1 : 0;
+                }
+                break;
+            }
             case 0x29: instance.I = instance.V[x] * 5; break; 
             case 0x33: 
                 instance.memory[instance.I] = instance.V[x] / 100;
@@ -189,13 +220,26 @@ void step()
                 break;
             case 0x55: 
                 for (int i = 0; i <= x; i++) instance.memory[instance.I + i] = instance.V[i];
+                if (!instance.load_store_quirks) instance.I += x + 1;
                 break;
             case 0x65: 
                 for (int i = 0; i <= x; i++) instance.V[i] = instance.memory[instance.I + i];
+                if (!instance.load_store_quirks) instance.I += x + 1;
                 break;
         }
         break;
     }
+
+    if ((opcode & 0xF0FF) == 0xF0F1) stack_push(x);
+    else if ((opcode & 0xF0FF) == 0xF0F2) stack_pop(x);
+    else if ((opcode & 0xF0FF) == 0xF0F3) stack_pusha();
+    else if ((opcode & 0xF0FF) == 0xF0F4) stack_popa();
+    else if ((opcode & 0xF0FF) == 0xF0F5) stack_peak(x);
+    else if ((opcode & 0xF0FF) == 0xF0F6) stack_size(x);
+    else if ((opcode & 0xF0FF) == 0xF0F7) stack_clear();
+    else if ((opcode & 0xF00F) == 0xF00C) math_mul(x, y);
+    else if ((opcode & 0xF00F) == 0xF00D) math_div(x, y);
+    else if ((opcode & 0xF00F) == 0xF00F) math_rem(x, y);
 }
 
 EMSCRIPTEN_KEEPALIVE

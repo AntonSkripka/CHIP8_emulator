@@ -135,7 +135,7 @@ export default function App({ bridge }) {
                     }}
                     onSave={() => performAction(() => bridge.saveGame(selectedGame.slug))}
                     onLoad={() => performAction(async () => {
-                        await bridge.loadGame(selectedGame.slug);
+                        await bridge.loadGame(selectedGame.slug, selectedGame.options);
                         closeDetails();
                     })}
                 />

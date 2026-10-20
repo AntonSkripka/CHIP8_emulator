@@ -26,6 +26,21 @@ export class Chip8Core {
         this.module._update_timers();
     }
 
+    setQuirks({
+        shiftQuirks = false,
+        loadStoreQuirks = false,
+        subEqualityQuirk = false,
+        addIPreserveVFQuirk = false
+    } = {}) {
+        const enabled = (value) => value === true || value === 1 || value === '1';
+        this.module._set_quirks(
+            enabled(shiftQuirks),
+            enabled(loadStoreQuirks),
+            enabled(subEqualityQuirk),
+            enabled(addIPreserveVFQuirk)
+        );
+    }
+
     loadBin(code) {
         const segments = this.assemble(code);
         if (!segments) return;

@@ -22,7 +22,9 @@ export class AnimatedBackground {
         }
 
         this.tileSize = 42;
+        this.frameInterval = 80;
         this.frameId = null;
+        this.frameTimeoutId = null;
         this.startTime = null;
         this.width = 0;
         this.height = 0;
@@ -127,14 +129,26 @@ export class AnimatedBackground {
     }
 
     requestFrame() {
-        if (this.frameId !== null || this.document.hidden) return;
-        this.frameId = this.window.requestAnimationFrame(this.draw);
+        if (this.frameId !== null || this.frameTimeoutId !== null || this.document.hidden) return;
+        if (this.reducedMotion || this.startTime === null) {
+            this.frameId = this.window.requestAnimationFrame(this.draw);
+            return;
+        }
+
+        this.frameTimeoutId = this.window.setTimeout(() => {
+            this.frameTimeoutId = null;
+            if (!this.document.hidden) {
+                this.frameId = this.window.requestAnimationFrame(this.draw);
+            }
+        }, this.frameInterval);
     }
 
     handleVisibilityChange() {
         if (this.document.hidden) {
             if (this.frameId !== null) this.window.cancelAnimationFrame(this.frameId);
+            if (this.frameTimeoutId !== null) this.window.clearTimeout(this.frameTimeoutId);
             this.frameId = null;
+            this.frameTimeoutId = null;
         } else {
             this.startTime = null;
             this.requestFrame();
@@ -149,7 +163,9 @@ export class AnimatedBackground {
         this.reducedMotion = event.matches;
         if (this.reducedMotion) {
             if (this.frameId !== null) this.window.cancelAnimationFrame(this.frameId);
+            if (this.frameTimeoutId !== null) this.window.clearTimeout(this.frameTimeoutId);
             this.frameId = null;
+            this.frameTimeoutId = null;
             this.draw(0);
         } else {
             this.startTime = null;

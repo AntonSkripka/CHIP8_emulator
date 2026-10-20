@@ -8,6 +8,7 @@ export class Chip8Emulator {
         this.memoryMap = memoryMap;
         this.scheduler = scheduler;
         this.logger = logger;
+        this.tickrate = 20;
 
         this.loadDefaultPong();
         this.monitor.updateStackUI();
@@ -16,21 +17,21 @@ export class Chip8Emulator {
     start() {
         let lastTimerUpdate = this.scheduler.now();
         let lastInstructionTime = this.scheduler.now();
-        const timerInterval = 1000 / 120;
-        const instructionInterval = 1000 / 1000;
+        const timerInterval = 1000 / 60;
 
         const frame = (timestamp) => {
+            const instructionInterval = 1000 / (this.tickrate * 60);
             if (timestamp - lastInstructionTime > 100) {
                 lastInstructionTime = timestamp - instructionInterval;
             }
 
-            while (timestamp - lastInstructionTime >= instructionInterval) {
+            while (timestamp - lastInstructionTime + 0.000001 >= instructionInterval) {
                 this.core.step();
                 this.monitor.updateStackUI();
                 lastInstructionTime += instructionInterval;
             }
 
-            while (timestamp - lastTimerUpdate >= timerInterval) {
+            while (timestamp - lastTimerUpdate + 0.000001 >= timerInterval) {
                 this.core.updateTimers();
                 lastTimerUpdate += timerInterval;
             }
@@ -48,7 +49,12 @@ export class Chip8Emulator {
         this.core.loadBin(source);
     }
 
-    loadRom(rom) {
+    loadRom(rom, options = {}) {
+        this.core.setQuirks(options);
+        const tickrate = Number(options.tickrate);
+        this.tickrate = Number.isFinite(tickrate) && tickrate > 0
+            ? Math.max(1, Math.min(Math.floor(tickrate), 10000))
+            : 20;
         rom.forEach((byte, index) => this.core.loadDataAt(0x200 + index, byte));
     }
 
@@ -58,6 +64,7 @@ export class Chip8Emulator {
 
     reset() {
         this.core.init();
+        this.tickrate = 20;
         this.monitor.reset();
         this.display.clear();
     }

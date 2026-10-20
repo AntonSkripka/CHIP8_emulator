@@ -21,6 +21,10 @@ typedef struct {
 
     uint8_t  delay_timer;             
     uint8_t  sound_timer;             
+    bool shift_quirks;
+    bool load_store_quirks;
+    bool sub_equality_quirk;
+    bool add_i_preserve_vf_quirk;
 
     uint32_t display[DISPLAY_WIDTH * DISPLAY_HEIGHT]; 
     uint8_t  keypad[16];              

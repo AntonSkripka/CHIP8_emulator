@@ -5,8 +5,8 @@ const commandTable = {
     'CALL': 0x2000,
     'SE': 0x3000,
     'SNE': 0x4000,
-    'PUSH': 0x5001,
-    'POP': 0x5002,
+    'PUSH': 0xF0F1,
+    'POP': 0xF0F2,
     'OR': 0x8001,
     'AND': 0x8002,
     'XOR': 0x8003,
@@ -177,25 +177,25 @@ function encodeInstruction(tokens, labels) {
         case 'DRW':
             return 0xD000 | (x << 8) | (y << 4) | (parseNumber(arg3) & 0xF);
         case 'PUSH':
-            return 0x5000 | (x << 8) | 0x01;
+            return 0xF0F1 | (x << 8);
         case 'POP':
-            return 0x5000 | (x << 8) | 0x02;
+            return 0xF0F2 | (x << 8);
         case 'PUSHA':
-            return 0x5000 | 0x03;
+            return 0xF0F3;
         case 'POPA':
-            return 0x5000 | 0x04;
+            return 0xF0F4;
         case 'PEAK':
-            return 0x5000 | (x << 8) | 0x05;
+            return 0xF0F5 | (x << 8);
         case 'SIZESTACK':
-            return 0x5000 | (x << 8) | 0x06;
+            return 0xF0F6 | (x << 8);
         case 'CLEARSTACK':
-            return 0x5000 | 0x07;
+            return 0xF0F7;
         case 'MUL':
-            return 0x8000 | (x << 8) | (y << 4) | 0x9;
+            return 0xF00C | (x << 8) | (y << 4);
         case 'DIV':
-            return 0x8000 | (x << 8) | (y << 4) | 0xA;
+            return 0xF00D | (x << 8) | (y << 4);
         case 'REM':
-            return 0x8000 | (x << 8) | (y << 4) | 0xB;
+            return 0xF00F | (x << 8) | (y << 4);
         case 'SKP':
             return 0xE09E | (x << 8);
         case 'SKNP':
