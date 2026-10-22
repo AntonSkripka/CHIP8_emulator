@@ -13,6 +13,10 @@ static uint8_t* data_area;
 
 static uint16_t total_disk_clusters = 0;
 
+static bool is_valid_cluster(uint16_t cluster) {
+    return cluster >= 2 && cluster < total_disk_clusters;
+}
+
 void init_fs_pointers() {
     uint8_t* base = get_disk_memory_ptr();
     
@@ -32,7 +36,7 @@ void format_disk() {
 
     memcpy(boot_sector->magic, "CH8F", 4);
     boot_sector->total_clusters = total_disk_clusters;
-    boot_sector->free_clusters = total_disk_clusters;
+    boot_sector->free_clusters = total_disk_clusters - 2;
     boot_sector->root_dir_offset = SECTOR_SIZE + 4096;
     boot_sector->data_area_offset = SECTOR_SIZE + 4096 + 2048;
     
@@ -40,16 +44,20 @@ void format_disk() {
     fat_table[1] = 0xFFFF;
     
     mark_disk_as_dirty();
-    printf("Format complete. Available clusters: %d\n", total_disk_clusters);
+    printf("Format complete. Available clusters: %d\n", total_disk_clusters - 2);
 }
 
 EMSCRIPTEN_KEEPALIVE
 void vfs_init() {
     init_fs_pointers();
-    if (strncmp(boot_sector->magic, "CH8F", 4) != 0) {
+    if (strncmp(boot_sector->magic, "CH8F", 4) != 0 ||
+        boot_sector->total_clusters != total_disk_clusters ||
+        boot_sector->root_dir_offset != SECTOR_SIZE + 4096 ||
+        boot_sector->data_area_offset != SECTOR_SIZE + 4096 + 2048) {
         printf("Formatting disk...\n");
         format_disk();
     } else {
+        fat_recount_free_clusters();
         printf("Free clusters: %d\n", boot_sector->free_clusters);
     }
 }
@@ -69,6 +77,10 @@ static inline uint8_t* get_cluster_address(uint16_t cluster) {
 }
 
 static void write_cluster_payload(uint16_t cluster, const uint8_t* source, uint32_t size) {
+    if (!is_valid_cluster(cluster) || source == NULL || size > CLUSTER_SIZE) {
+        return;
+    }
+
     uint8_t* dest = get_cluster_address(cluster);
     memcpy(dest, source, size);
     
@@ -78,8 +90,13 @@ static void write_cluster_payload(uint16_t cluster, const uint8_t* source, uint3
 }
 
 uint16_t fat_write_data(const uint8_t* data, uint32_t size) {
-    if (size == 0) return FAT_ENTRY_EOF;
+    if (size == 0 || data == NULL || boot_sector == NULL || fat_table == NULL ||
+        total_disk_clusters < 2) {
+        return FAT_ERROR_NO_SPACE;
+    }
 
+    const uint32_t max_file_size = ((uint32_t)total_disk_clusters - 2) * CLUSTER_SIZE;
+    if (size > max_file_size) return FAT_ERROR_NO_SPACE;
     uint32_t needed_clusters = (size + CLUSTER_SIZE - 1) / CLUSTER_SIZE;
     if (needed_clusters > boot_sector->free_clusters) {
         return FAT_ERROR_NO_SPACE; 
@@ -120,19 +137,27 @@ uint16_t fat_write_data(const uint8_t* data, uint32_t size) {
     return first_cluster;
 }
 
-static inline bool is_valid_cluster(uint16_t cluster) {
-    return (cluster >= 2 && cluster < total_disk_clusters); 
-}
+bool fat_read_data(uint16_t start_cluster, uint32_t size, uint8_t* out_buffer, uint32_t capacity) {
+    if (size == 0 || out_buffer == NULL || size > capacity ||
+        boot_sector == NULL || fat_table == NULL || total_disk_clusters < 2 ||
+        !is_valid_cluster(start_cluster)) {
+        return false;
+    }
 
-void fat_read_data(uint16_t start_cluster, uint32_t size, uint8_t* out_buffer) {
-    if (size == 0 || out_buffer == NULL) return;
-    if (!is_valid_cluster(start_cluster)) return;
+    const uint32_t max_file_size = ((uint32_t)total_disk_clusters - 2) * CLUSTER_SIZE;
+    if (size > max_file_size) return false;
+    const uint32_t needed_clusters = 1 + (size - 1) / CLUSTER_SIZE;
+    if (needed_clusters > (uint32_t)total_disk_clusters - 2) return false;
 
     uint16_t current_cluster = start_cluster;
     uint32_t bytes_remaining = size;
     uint8_t* dest_ptr = out_buffer;
 
-    while (bytes_remaining > 0) {
+    for (uint32_t visited = 0; bytes_remaining > 0 && visited < needed_clusters; visited++) {
+        if (!is_valid_cluster(current_cluster) || fat_table[current_cluster] == FAT_ENTRY_FREE) {
+            return false;
+        }
+
         uint32_t bytes_to_read = (bytes_remaining > CLUSTER_SIZE) ? CLUSTER_SIZE : bytes_remaining;
         
         const uint8_t* cluster_ptr = get_cluster_address(current_cluster);
@@ -141,27 +166,34 @@ void fat_read_data(uint16_t start_cluster, uint32_t size, uint8_t* out_buffer) {
         dest_ptr += bytes_to_read;
         bytes_remaining -= bytes_to_read;
 
+        if (bytes_remaining == 0) return true;
+
         uint16_t next_cluster = fat_table[current_cluster];
 
         if (next_cluster == FAT_ENTRY_EOF || !is_valid_cluster(next_cluster)) {
-            break; 
+            return false;
         }
         
         current_cluster = next_cluster;
     }
+
+    return false;
 }
 
 void fat_free_chain(uint16_t start_cluster) {
-    if (!is_valid_cluster(start_cluster)) return;
+    if (fat_table == NULL || boot_sector == NULL || !is_valid_cluster(start_cluster)) return;
 
     uint16_t current_cluster = start_cluster;
     
-    while (current_cluster != FAT_ENTRY_EOF) {
+    for (uint32_t visited = 0; visited < (uint32_t)total_disk_clusters - 2; visited++) {
+        if (!is_valid_cluster(current_cluster)) break;
+
+        if (fat_table[current_cluster] == FAT_ENTRY_FREE) break;
         uint16_t next_cluster = fat_table[current_cluster];
-        
+
         fat_table[current_cluster] = FAT_ENTRY_FREE;
-        
-        if (boot_sector->free_clusters < total_disk_clusters) {
+
+        if (boot_sector->free_clusters < (uint16_t)(total_disk_clusters - 2)) {
             boot_sector->free_clusters++;
         }
         
@@ -175,12 +207,42 @@ void fat_free_chain(uint16_t start_cluster) {
     mark_disk_as_dirty();
 }
 
-EMSCRIPTEN_KEEPALIVE
+void fat_recount_free_clusters(void) {
+    if (fat_table == NULL || boot_sector == NULL || total_disk_clusters < 2) return;
+
+    uint16_t free_clusters = 0;
+    for (uint16_t cluster = 2; cluster < total_disk_clusters; cluster++) {
+        if (fat_table[cluster] == FAT_ENTRY_FREE) free_clusters++;
+    }
+
+    if (boot_sector->free_clusters != free_clusters) {
+        boot_sector->free_clusters = free_clusters;
+        mark_disk_as_dirty();
+    }
+}
+
 FAT_DirEntry* fat_get_directory_entry(int index) {
     if (index < 0 || index >= MAX_FILES || root_directory == NULL) {
         return NULL;
     }
     return &root_directory[index];
+}
+
+EMSCRIPTEN_KEEPALIVE
+int fat_get_entry_name(int index, char* out_name, uint32_t capacity) {
+    if (index < 0 || index >= MAX_FILES || out_name == NULL || capacity < 18 || root_directory == NULL) {
+        return -1;
+    }
+
+    FAT_DirEntry* entry = &root_directory[index];
+    if (!entry->is_used) {
+        out_name[0] = '\0';
+        return 0;
+    }
+
+    memcpy(out_name, entry->filename, sizeof(entry->filename));
+    out_name[17] = '\0';
+    return 1;
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -191,11 +253,15 @@ int fat_get_max_files(void) {
 EMSCRIPTEN_KEEPALIVE
 uint32_t fat_get_entry_size(int index) {
     if (index < 0 || index >= MAX_FILES || root_directory == NULL) return 0;
-    return root_directory[index].file_size;
+    if (!root_directory[index].is_used) return 0;
+    if (total_disk_clusters < 2) return 0;
+
+    const uint32_t max_file_size = ((uint32_t)total_disk_clusters - 2) * CLUSTER_SIZE;
+    return root_directory[index].file_size <= max_file_size ? root_directory[index].file_size : 0;
 }
 
 EMSCRIPTEN_KEEPALIVE
 uint32_t fat_get_free_space_bytes(void) {
     if (boot_sector == NULL) return 0;
-    return boot_sector->free_clusters * CLUSTER_SIZE;
+    return (uint32_t)boot_sector->free_clusters * CLUSTER_SIZE;
 }

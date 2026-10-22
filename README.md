@@ -23,7 +23,7 @@ The prepared catalogue data is in `web/public/roms/`: `programs.json` and `autho
 ## Features
 
 * **WebAssembly CHIP-8 Core:** The CHIP-8 interpreter and supporting C modules are compiled to WebAssembly. Super-CHIP and XO-CHIP extensions are not supported.
-* **Virtual Disk:** A C-based FAT/VFS layer provides a 1 MB virtual disk. Its contents are saved in browser IndexedDB and can be managed through the disk interface.
+* **Virtual Disk:** A C-based FAT/VFS layer provides a 1 MB virtual disk with up to 64 files and filenames limited to 17 UTF-8 bytes. Its contents are saved in browser IndexedDB and can be managed through the disk interface.
 * **Developer Tools:** The browser interface includes a CHIP-8 assembler, register and stack monitors, and a memory map.
 * **ROM Loading:** Load `.ch8` ROM files using the file picker, drag and drop, or the virtual disk.
 * **React Game Store:** Browse the bundled catalogue, view game details and previews, run supported CHIP-8 games, or add supported games to the virtual disk. SCHIP/XO-CHIP games are listed but cannot be run or added to the disk.

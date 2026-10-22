@@ -24,3 +24,5 @@ web/js/chip8.wasm
 .cache/
 coverage/
 *.log
+
+/FUNCTIONS.md

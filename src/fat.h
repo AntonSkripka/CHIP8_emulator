@@ -33,16 +33,14 @@ typedef struct __attribute__((packed)) {
 } FAT_BootSector;
 
 FAT_DirEntry* fat_get_directory_entry(int index);
+int fat_get_entry_name(int index, char* out_name, uint32_t capacity);
 int fat_get_max_files(void);
 void init_fs_pointers();
 void format_disk();
-static uint16_t find_free_cluster();
-static inline uint8_t* get_cluster_address(uint16_t cluster);
-static void write_cluster_payload(uint16_t cluster, const uint8_t* source, uint32_t size);
 uint16_t fat_write_data(const uint8_t* data, uint32_t size);
-static inline bool is_valid_cluster(uint16_t cluster);
-void fat_read_data(uint16_t start_cluster, uint32_t size, uint8_t* out_buffer);
+bool fat_read_data(uint16_t start_cluster, uint32_t size, uint8_t* out_buffer, uint32_t capacity);
 void fat_free_chain(uint16_t start_cluster);
+void fat_recount_free_clusters(void);
 uint32_t fat_get_entry_size(int index);
 uint32_t fat_get_free_space_bytes(void);
 

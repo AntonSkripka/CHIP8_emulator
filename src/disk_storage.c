@@ -3,6 +3,9 @@
 #include <emscripten.h>
 #include "disk_storage.h"
 
+static uint8_t disk_memory[DISK_SIZE];
+static bool is_dirty = false;
+
 EMSCRIPTEN_KEEPALIVE
 uint8_t* get_disk_memory_ptr() {
     return disk_memory;
