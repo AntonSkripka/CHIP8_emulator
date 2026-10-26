@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { GameCard } from './components/GameCard.jsx';
-import { GameDetails } from './components/GameDetails.jsx';
-import './components/GameStore.css';
+import { GameCard } from '../GameCard/GameCard.jsx';
+import { GameDetails } from '../GameDetails/GameDetails.jsx';
+import {
+    GameGrid,
+    StoreDescription,
+    StoreKicker,
+    StoreMessage,
+    StoreRoot,
+    StoreToolbar
+} from './App.styled.jsx';
 
 export default function App({ bridge }) {
     const [catalog, setCatalog] = useState(null);
@@ -89,18 +96,18 @@ export default function App({ bridge }) {
     }
 
     return (
-        <div className="game-store">
-            <div className="game-store-toolbar">
+        <StoreRoot>
+            <StoreToolbar>
                 <div>
-                    <p className="game-store-kicker">GAME CATALOG / {catalog ? games.length : '...' } TITLES</p>
-                    <p className="game-store-description">SELECT A GAME TO VIEW ITS DETAILS, ADD IT TO DISK, OR RUN IT.</p>
+                    <StoreKicker>GAME CATALOG / {catalog ? games.length : '...'} TITLES</StoreKicker>
+                    <StoreDescription>SELECT A GAME TO VIEW ITS DETAILS, ADD IT TO DISK, OR RUN IT.</StoreDescription>
                 </div>
-            </div>
+            </StoreToolbar>
 
-            {error && !selectedGame && <p className="game-store-error" role="alert">{error}</p>}
+            {error && !selectedGame && <StoreMessage role="alert" $error>{error}</StoreMessage>}
 
             {catalog ? (
-                <div className="game-store-grid">
+                <GameGrid>
                     {games.map((game) => (
                         <GameCard
                             key={game.slug}
@@ -114,9 +121,9 @@ export default function App({ bridge }) {
                             }}
                         />
                     ))}
-                </div>
+                </GameGrid>
             ) : (
-                <p className="game-store-loading">LOADING CATALOG...</p>
+                <StoreMessage>LOADING CATALOG...</StoreMessage>
             )}
 
             {selectedGame && (
@@ -129,7 +136,7 @@ export default function App({ bridge }) {
                     isClosing={isDetailsClosing}
                     onClose={closeDetails}
                     onAnimationEnd={(event) => {
-                        if (event.animationName === 'gameDetailsBackdropOut') {
+                        if (isDetailsClosing && event.target === event.currentTarget) {
                             finishClosingDetails();
                         }
                     }}
@@ -140,6 +147,6 @@ export default function App({ bridge }) {
                     })}
                 />
             )}
-        </div>
+        </StoreRoot>
     );
 }

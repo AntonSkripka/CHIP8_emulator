@@ -1,6 +1,7 @@
 :root,
 :root[data-theme="green"] {
     color-scheme: dark;
+    --shop-image-filter: grayscale(1) sepia(0.75) hue-rotate(75deg) saturate(1.45) contrast(1.12);
     --background-color: #050A05;
     --surface-color: #071007;
     --surface-raised: #0b170b;
@@ -12,6 +13,7 @@
 }
 
 :root[data-theme="mono"] {
+    --shop-image-filter: grayscale(1) contrast(1.15);
     --background-color: #000000;
     --surface-color: #080808;
     --surface-raised: #111111;
@@ -23,6 +25,7 @@
 }
 
 :root[data-theme="amber"] {
+    --shop-image-filter: grayscale(1) sepia(0.75) hue-rotate(0deg) saturate(1.45) contrast(1.12);
     --background-color: #0D0800;
     --surface-color: #140b00;
     --surface-raised: #201100;
@@ -34,6 +37,7 @@
 }
 
 :root[data-theme="blue"] {
+    --shop-image-filter: grayscale(1) sepia(0.75) hue-rotate(180deg) saturate(1.45) contrast(1.12);
     --background-color: #000080;
     --surface-color: #00006b;
     --surface-raised: #00005c;
