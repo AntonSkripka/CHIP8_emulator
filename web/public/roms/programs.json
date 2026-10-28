@@ -8,6 +8,7 @@
 			"media/octojam1title/octojam1title.gif"
 		],
 		"desc": "Greeting program for the Octo-ber 2014 Chip8 Game Jam.",
+		"genre": "Demo",
 		"event": "Octojam1",
 		"release": "2014-09-29",
 		"platform": "chip8",
@@ -30,6 +31,7 @@
 			"media/octojam2title/octojam2title.gif"
 		],
 		"desc": "This title card draws a nearly full screen 64x30 animation with very low flicker.",
+		"genre": "Demo",
 		"event": "Octojam2",
 		"release": "2015-09-21",
 		"platform": "chip8",
@@ -56,6 +58,7 @@
 			"media/octojam3title/octojam3title.gif"
 		],
 		"desc": "This title card disambiguates at runtime between a COSMAC VIP, SCHIP, and Octo.",
+		"genre": "Demo",
 		"event": "Octojam3",
 		"release": "2016-09-25",
 		"platform": "chip8",
@@ -85,6 +88,7 @@
 			"media/octojam4title/octojam4title.gif"
 		],
 		"desc": "This title card demonstrates the new :macro and :calc directives.",
+		"genre": "Demo",
 		"event": "Octojam4",
 		"release": "2017-09-23",
 		"platform": "chip8",
@@ -114,6 +118,7 @@
 			"media/octojam5title/octojam5title.gif"
 		],
 		"desc": "Greeting program for the fifth annual 2018 Octojam.",
+		"genre": "Demo",
 		"event": "Octojam5",
 		"release": "2018-09-24",
 		"platform": "chip8",
@@ -143,6 +148,7 @@
 			"media/octojam6title/octojam6title.gif"
 		],
 		"desc": "Greeting program for the sixth annual 2019 Octojam.",
+		"genre": "Demo",
 		"event": "Octojam6",
 		"release": "2019-09-07",
 		"platform": "chip8",
@@ -171,6 +177,7 @@
 			"media/octojam7title/octojam7title.gif"
 		],
 		"desc": "Greeting program for the seventh annual 2020 Octojam.",
+		"genre": "Demo",
 		"event": "Octojam7",
 		"release": "2020-08-07",
 		"platform": "chip8",
@@ -204,6 +211,7 @@
 			"media/octojam8title/octojam8title.gif"
 		],
 		"desc": "Greeting program for the eighth annual 2021 Octojam.",
+		"genre": "Demo",
 		"event": "Octojam8",
 		"release": "2021-10-01",
 		"platform": "chip8",
@@ -237,6 +245,7 @@
 			"media/octojam9title/octojam9title.gif"
 		],
 		"desc": "Greetings program for the ninth annual 2022 Octojam.",
+		"genre": "Demo",
 		"event": "Octojam9",
 		"release": "2022-10-01",
 		"platform": "chip8",
@@ -270,6 +279,7 @@
 			"media/octojam10title/octojam10title.gif"
 		],
 		"desc": "Greetings program for the tenth annual 2023 Octojam.",
+		"genre": "Demo",
 		"event": "Octojam10",
 		"release": "2023-10-01",
 		"platform": "chip8",
@@ -303,6 +313,7 @@
 			"media/garlicscape/recording.gif"
 		],
 		"desc": "Collect aliums, avoid moths, pet llamas. A template program for Octojam 7.",
+		"genre": "Arcade",
 		"howto": "Keys 5 7 8 9 move you around. Collect aliums, avoid moths, pet llamas.",
 		"event": "Octojam7",
 		"release": "2020-08-01",
@@ -337,6 +348,7 @@
 			"media/superneatboy/recording.gif"
 		],
 		"desc": "Jump, fall, tidy up leaves. A template program for Octojam 7.",
+		"genre": "Platformer",
 		"howto": "Keys 7 and 9 walk left and right, wrapping round the edge of the screen.",
 		"event": "Octojam7",
 		"release": "2020-08-01",
@@ -371,6 +383,7 @@
 			"media/blackrainbow/blackrainbow.gif"
 		],
 		"desc": "Plumb the depths of your subconscious and bring back the motherlode...",
+		"genre": "Adventure",
 		"howto": "Key 9 steers you right as you sink. Plumb the depths and bring the motherlode back up.",
 		"event": "Octojam3",
 		"release": "2016-11-01",
@@ -402,6 +415,7 @@
 			"media/caveexplorer/cave2.gif"
 		],
 		"desc": "Do you have what it takes to be a Cave Explorer?",
+		"genre": "Adventure",
 		"release": "2014-06-22",
 		"platform": "chip8",
 		"options": {
@@ -421,6 +435,7 @@
 			"media/wonkypong/wonkypong.gif"
 		],
 		"desc": "Pong, but wonky. Made for Octojam IV.",
+		"genre": "Sports",
 		"howto": "Keys 7 and A move the left paddle, keys E and F the right. Two player pong, so bring a friend.",
 		"event": "Octojam4",
 		"release": "2018-11-01",
@@ -442,6 +457,7 @@
 			"media/gradsim/gradsim.gif"
 		],
 		"desc": "Welcome to the sunless depths of my ennui.",
+		"genre": "Simulation",
 		"release": "2014-09-15",
 		"platform": "schip",
 		"options": {
@@ -463,6 +479,7 @@
 			"media/mondrian/mondrian.gif"
 		],
 		"desc": "Draw random compositions in the style of Piet Mondrian.",
+		"genre": "Creative",
 		"release": "2014-09-25",
 		"platform": "schip",
 		"options": {
@@ -484,6 +501,7 @@
 			"media/RPS/rps_oj1.gif"
 		],
 		"desc": "Classic \"Rock Paper Scissors\" game for the Chip8.",
+		"genre": "Board",
 		"release": "2015-10-25",
 		"platform": "chip8",
 		"event": "Octojam1",
@@ -507,6 +525,7 @@
 			"media/octoachip8story/octoachip8story.gif"
 		],
 		"desc": "A visual novel game for the Chip8.",
+		"genre": "Visual Novel",
 		"howto": "Press any key to move the story on to its next screen.",
 		"release": "2015-10-29",
 		"platform": "chip8",
@@ -531,6 +550,7 @@
 			"media/pumpkindressup/pumpkindressup.gif"
 		],
 		"desc": "Classic Adobe Flash games, now in Chip8.",
+		"genre": "Simulation",
 		"release": "2015-11-01",
 		"platform": "chip8",
 		"event": "Octojam1",
@@ -554,6 +574,7 @@
 			"media/DVN8/DVN8.gif"
 		],
 		"desc": "This is your great-grandma's dungeon crawler. You can see it with the manual at https://systemlogoff.com/share/DVN8/index.html",
+		"genre": "RPG",
 		"howto": "A first person dungeon crawl. Keys 5 7 8 9 take you through it, redrawing the whole view at each step.",
 		"release": "2017-10-30",
 		"platform": "schip",
@@ -584,6 +605,7 @@
 			"media/octorancher/octorancher.gif"
 		],
 		"desc": "Train monsters and become a real ranching champion. Read the manual at https://systemlogoff.com/share/Octo-Rancher-Manual.pdf",
+		"genre": "Simulation",
 		"release": "2018-10-30",
 		"platform": "chip8",
 		"event": "Octojam5",
@@ -613,6 +635,7 @@
 			"media/tank/tank.gif"
 		],
 		"desc": "A two player artillery game.",
+		"genre": "Strategy",
 		"howto": "The two numbers at the top are your shot. Keys 7 and 9 change the first, keys 5 and 8 the second, and key E fires it. A two player artillery game.",
 		"event": "Octojam5",
 		"release": "2018-10-31",
@@ -630,6 +653,7 @@
 			"media/flightrunner/flightrunner.gif"
 		],
 		"desc": "A simple flight runner for the Chip8.",
+		"genre": "Arcade",
 		"howto": "Keys 7 and 9 steer left and right.",
 		"event": "Octojam1",
 		"release": "2014-11-01",
@@ -651,6 +675,7 @@
 			"media/ultimatetictactoe/tictac.gif"
 		],
 		"desc": "Two player game",
+		"genre": "Board",
 		"howto": "Keys 5 7 8 9 move your mark around the nine boards, key 6 places it. Two players share one keypad.",
 		"event": "Octojam1",
 		"release": "2014-09-01",
@@ -675,6 +700,7 @@
 			"media/t8nks/tanks.gif"
 		],
 		"desc": "Artillery game",
+		"genre": "Strategy",
 		"event": "Octojam2",
 		"release": "2015-08-31",
 		"platform": "xochip",
@@ -701,6 +727,7 @@
 			"media/octopaint/paint.gif"
 		],
 		"desc": "Drawing Program",
+		"genre": "Creative",
 		"howto": "A drawing program. Keys 5 7 8 9 move the cursor, keys 2 and 3 change the brush size, and key F lifts the pen.",
 		"release": "2016-06-12",
 		"platform": "xochip",
@@ -727,6 +754,7 @@
 			"media/jub8-1/j1title.gif"
 		],
 		"desc": "Rhythm game. WARNING: Volume",
+		"genre": "Rhythm",
 		"event": "Octojam3",
 		"release": "2016-08-31",
 		"platform": "xochip",
@@ -756,6 +784,7 @@
 			"media/jub8-2/j2title.gif"
 		],
 		"desc": "Rhythm game. WARNING: Volume",
+		"genre": "Rhythm",
 		"event": "Octojam3",
 		"release": "2016-08-31",
 		"platform": "xochip",
@@ -785,6 +814,7 @@
 			"media/jub8-3/j3title.gif"
 		],
 		"desc": "Rhythm game. WARNING: Volume",
+		"genre": "Rhythm",
 		"howto": "A rhythm game. Notes fall down four lanes, one for each column of the keypad, and you hit the key as a note lands.",
 		"event": "Octojam3",
 		"release": "2016-08-31",
@@ -815,6 +845,7 @@
 			"media/jub8-4/j4title.gif"
 		],
 		"desc": "Rhythm game. WARNING: Volume",
+		"genre": "Rhythm",
 		"howto": "A rhythm game. Keys 1 2 3 C pick your lane before the track starts.",
 		"event": "Octojam3",
 		"release": "2016-08-31",
@@ -845,6 +876,7 @@
 			"media/jub8-5/j5title.gif"
 		],
 		"desc": "Rhythm game. WARNING: Volume",
+		"genre": "Rhythm",
 		"event": "Octojam3",
 		"release": "2016-08-31",
 		"platform": "xochip",
@@ -874,6 +906,7 @@
 			"media/jub8-6/j6title.gif"
 		],
 		"desc": "Rhythm game. WARNING: Volume",
+		"genre": "Rhythm",
 		"event": "Octojam3",
 		"release": "2016-08-31",
 		"platform": "xochip",
@@ -903,6 +936,7 @@
 			"media/sub8/sub8.gif"
 		],
 		"desc": "Lander game",
+		"genre": "Arcade",
 		"howto": "A lander game. Keys 5 7 8 9 steer your craft through the cave, and key D starts the run again.",
 		"event": "Octojam4",
 		"release": "2017-08-31",
@@ -933,6 +967,7 @@
 			"media/masquer8/masquer8.gif"
 		],
 		"desc": "Cuttlefish pattern matching game for chip8.",
+		"genre": "Puzzle",
 		"event": "Octojam2",
 		"release": "2015-10-30",
 		"platform": "chip8",
@@ -959,6 +994,7 @@
 			"media/BadKaiJuJu/kaiju.gif"
 		],
 		"desc": "The year is 1977. 90% of the world's landmass is now underwater and the world is at war...",
+		"genre": "Action",
 		"howto": "Hold key 5 to raise the creature beside the tower. It only appears while the key is down.",
 		"event": "Ludum Dare",
 		"release": "2015-08-24",
@@ -982,6 +1018,7 @@
 			"media/civiliz8n/civiliz8n.png"
 		],
 		"desc": "Grow a tiny civilization in 10 turns",
+		"genre": "Strategy",
 		"event": "Octojam2",
 		"release": "2016-09-26",
 		"platform": "xochip",
@@ -1012,6 +1049,7 @@
 			"media/skyward/skyward.png"
 		],
 		"desc": "Climb as high as you can!",
+		"genre": "Arcade",
 		"howto": "Key 1 starts it. Keys 5 7 8 9 move the climber. Climb as high as you can.",
 		"event": "Octojam3",
 		"release": "2016-11-01",
@@ -1042,6 +1080,7 @@
 			"media/horseWorldOnline/title.gif"
 		],
 		"desc": "An online horse breeding game.",
+		"genre": "Simulation",
 		"event": "Octojam1",
 		"release": "2014-10-28",
 		"platform": "chip8",
@@ -1065,6 +1104,7 @@
 			"media/horseyJump/jump.gif"
 		],
 		"desc": "Press the X button to make the horse jump over the fence.",
+		"genre": "Arcade",
 		"howto": "Press key 0 to make the horse jump over the fence.",
 		"event": "Octojam2",
 		"release": "2015-10-30",
@@ -1092,6 +1132,7 @@
 			"media/superOctoTrackXO/title.gif"
 		],
 		"desc": "Compose songs with the XO-Chip audio system.",
+		"genre": "Music",
 		"event": "Octojam2",
 		"release": "2015-10-15",
 		"platform": "xochip",
@@ -1118,6 +1159,7 @@
 			"media/ghostEscape/ghostescape.gif"
 		],
 		"desc": "Seek revenge on mortal men in this exciting adventure!",
+		"genre": "Adventure",
 		"howto": "Key 0 lifts the ghost upward, and it sinks again when you let go.",
 		"event": "Octojam3",
 		"release": "2016-10-29",
@@ -1148,6 +1190,7 @@
 			"media/tombstontipp/tomb.gif"
 		],
 		"desc": "Take turns pressing buttons to see who wins.",
+		"genre": "Party",
 		"event": "Octojam5",
 		"release": "2018-10-12",
 		"platform": "chip8",
@@ -1178,6 +1221,7 @@
 			"media/flutterby/flutterby.gif"
 		],
 		"desc": "A game where you are a butterfly trying to get to flowers.",
+		"genre": "Arcade",
 		"howto": "Key 5 flaps the butterfly upward, key 8 folds its wings. Get to the flowers.",
 		"event": "Octojam6",
 		"release": "2019-10-08",
@@ -1208,6 +1252,7 @@
 			"media/1dcell/cellular.gif"
 		],
 		"desc": "An implementation of 1D Cellular Automata.",
+		"genre": "Simulation",
 		"event": "Octojam1",
 		"release": "2014-10-26",
 		"platform": "chip8",
@@ -1231,6 +1276,7 @@
 			"media/keshaWasBird/kesha.gif"
 		],
 		"desc": "A surreal telephone adventure.",
+		"genre": "Interactive Fiction",
 		"howto": "A surreal telephone adventure that plays out on its own. Press key 1 to move it on to the next scene.",
 		"release": "2016-01-21",
 		"platform": "xochip",
@@ -1257,6 +1303,7 @@
 			"media/keshaWasBiird/kesha.gif"
 		],
 		"desc": "Second installment in epic saga about Kesha.",
+		"genre": "Interactive Fiction",
 		"howto": "This one plays itself. Leave it alone and the noise settles into text, because holding key 1 keeps it scrambled.",
 		"event": "Octojam3",
 		"release": "2016-10-31",
@@ -1287,6 +1334,7 @@
 			"media/keshaWasNiiinja/kesha.gif"
 		],
 		"desc": "Legendary ninja returns! Who is he? Ruthless killer? Absolute evil? Character with his own purpose? His motives are still unclear, and his story is for you to unfold.",
+		"genre": "Interactive Fiction",
 		"howto": "Keys 7 and 9 walk the ninja left and right, key 5 jumps.",
 		"event": "Octojam4",
 		"release": "2017-10-31",
@@ -1317,6 +1365,7 @@
 			"media/redOctober/title.gif"
 		],
 		"desc": "A futuristic RPG.",
+		"genre": "RPG",
 		"howto": "Press any key to move the opening text on. A futuristic role playing game.",
 		"event": "Octojam5",
 		"release": "2018-10-31",
@@ -1347,6 +1396,7 @@
 			"media/sk8/sk8.gif"
 		],
 		"desc": "Don't get trashed out there, GRRL!",
+		"genre": "Sports",
 		"event": "Octojam2",
 		"release": "2015-10-28",
 		"platform": "xochip",
@@ -1373,6 +1423,7 @@
 			"media/snake/snake.gif"
 		],
 		"desc": "Classic Snake game without walls.",
+		"genre": "Arcade",
 		"howto": "Keys 5 7 8 9 starts it and steers. There are no walls, so you pass through one edge and come back the other side.",
 		"event": "Octojam1",
 		"release": "2014-10-11",
@@ -1396,6 +1447,7 @@
 			"media/spacejam/title.gif"
 		],
 		"desc": "An extended and enhanced version loosely based on ShipTunnel from the 2014 OctoJam.",
+		"genre": "Action",
 		"howto": "Any key starts it. Keys 5 7 8 9 fly the ship up, left, down and right through the tunnel.",
 		"event": "Octojam2",
 		"release": "2015-10-30",
@@ -1423,6 +1475,7 @@
 			"media/mastermind/title.gif"
 		],
 		"desc": "The classic puzzle game of deduction.",
+		"genre": "Puzzle",
 		"event": "Octojam3",
 		"release": "2015-11-08",
 		"platform": "chip8",
@@ -1449,6 +1502,7 @@
 			"media/down8/down8.gif"
 		],
 		"desc": "you fall down an endless hole and then you die!",
+		"genre": "Arcade",
 		"howto": "Key 5 to fall. You go down an endless hole and then you die, and there is no avoiding it.",
 		"event": "Octojam2",
 		"release": "2015-10-28",
@@ -1472,6 +1526,7 @@
 			"media/trucksimul8or/truck.gif"
 		],
 		"desc": "You're a kid, you're a truck.",
+		"genre": "Simulation",
 		"howto": "Keys 5 and 8 pick a line on the menu and key 6 confirms it. You are a kid, you are a truck.",
 		"release": "2015-07-28",
 		"platform": "xochip",
@@ -1499,6 +1554,7 @@
 			"media/danm8ku/gameplay.gif"
 		],
 		"desc": "Bullet hell for the Chip-8! Survive 8 waves of exciting bullet patterns!",
+		"genre": "Shooter",
 		"event": "Octojam2",
 		"release": "2015-10-31",
 		"platform": "chip8",
@@ -1525,6 +1581,7 @@
 			"media/chipcross/chipcross.gif"
 		],
 		"desc": "16 levels of Picross implemented in CHIP8. 800 bytes of fun.",
+		"genre": "Puzzle",
 		"howto": "Keys 5 7 8 9 move the cursor, key 6 marks the square under it. Sixteen levels of Picross.",
 		"event": "Octojam5",
 		"release": "2018-10-15",
@@ -1555,6 +1612,7 @@
 			"media/knight/knight.gif"
 		],
 		"desc": "You're Artore the Puny, littlebrother and inferior to your great big brother, King Arthur.",
+		"genre": "Action",
 		"howto": "Key D to start. Keys 5 7 8 9 to move, key 4 to dodge, key 6 to attack.",
 		"event": "Octojam3",
 		"release": "2016-10-07",
@@ -1585,6 +1643,7 @@
 			"media/chipquarium/chipquarium.gif"
 		],
 		"desc": "A CHIP-8 fish tank simulator.",
+		"genre": "Simulation",
 		"howto": "A fish tank to watch rather than a game to win. Key E brings up how hungry and how happy the fish are.",
 		"event": "Octojam3",
 		"release": "2016-10-31",
@@ -1618,6 +1677,7 @@
 			"media/glitchGhost/glitchGhost.gif"
 		],
 		"desc": "glitch ghost is all alone in the cemetery, please help them make some friends by turning the trespassing humans into new ghosts!",
+		"genre": "Action",
 		"howto": "Keys 5 7 8 9 move the ghost around the cemetery, and key 6 turns a trespassing human into a new ghost friend.",
 		"event": "Octojam1",
 		"release": "2014-10-29",
@@ -1641,6 +1701,7 @@
 			"media/businessiscontagious/business.gif"
 		],
 		"desc": "capitalism.txt",
+		"genre": "Simulation",
 		"event": "NokiaJam",
 		"release": "2020-02-05",
 		"platform": "xochip",
@@ -1674,6 +1735,7 @@
 			"media/nokiatemplate/simcard.gif"
 		],
 		"desc": "SCHIP template program for resembling the Nokia 3310",
+		"genre": "Demo",
 		"event": "NokiaJam",
 		"release": "2020-01-20",
 		"platform": "schip",
@@ -1706,6 +1768,7 @@
 			"media/expedition/recording.gif"
 		],
 		"desc": "A short narrative about going outside.",
+		"genre": "Interactive Fiction",
 		"howto": "A short story that reads itself. Hold key 6 to keep the current line up, and let go to move on.",
 		"event": "NokiaJam",
 		"release": "2021-01-06",
@@ -1740,6 +1803,7 @@
 			"media/applejak/recording.gif"
 		],
 		"desc": "Interpreter for a subset of APL/K.",
+		"genre": "Utility",
 		"event": "Octojam7",
 		"release": "2020-10-07",
 		"platform": "schip",
@@ -1772,6 +1836,7 @@
 			"media/bulb/llama.gif"
 		],
 		"desc": "Interpreter for a language which resembles toenail clippings.",
+		"genre": "Utility",
 		"event": "Octojam7",
 		"release": "2020-10-15",
 		"platform": "schip",
@@ -1805,6 +1870,7 @@
 			"media/squad/fibs.gif"
 		],
 		"desc": "Interpreter for a regular-sized Forth.",
+		"genre": "Utility",
 		"event": "Octojam7",
 		"release": "2020-10-25",
 		"platform": "schip",
@@ -1838,6 +1904,7 @@
 			"media/spockpaperscissors/spockpaperscissors.gif"
 		],
 		"desc": "Intergalactic Rock Paper Scissors.",
+		"genre": "Board",
 		"event": "Octojam7",
 		"release": "2020-11-01",
 		"platform": "chip8",
@@ -1871,6 +1938,7 @@
 			"media/dodge/dodge.gif"
 		],
 		"desc": "Dodging asteroids in 56 bytes.",
+		"genre": "Arcade",
 		"event": "Octojam8",
 		"release": "2021-10-01",
 		"platform": "schip",
@@ -1905,6 +1973,7 @@
 			"media/snek/snek.gif"
 		],
 		"desc": "Minimalist Snake in 65 bytes.",
+		"genre": "Arcade",
 		"howto": "Keys 5 7 8 9 steer the snake up, left, down and right. Minimalist Snake, in sixty five bytes.",
 		"event": "Octojam8",
 		"release": "2021-10-01",
@@ -1940,6 +2009,7 @@
 			"media/octogon/octogon.gif"
 		],
 		"desc": "Eight fantastic sides, and eight awesome angles.",
+		"genre": "Arcade",
 		"howto": "Keys 7 and 9 rotate you round the rim, one way and the other. Keep spinning away from the closing walls.",
 		"event": "Octojam8",
 		"release": "2021-10-30",
@@ -1975,6 +2045,7 @@
 			"media/ordinaryidlegarden/recording.gif"
 		],
 		"desc": "Grow a tiny garden filled with dandelions, pumpkins... lanturns... skeletons?",
+		"genre": "Simulation",
 		"event": "NokiaJam",
 		"release": "2021-02-05",
 		"platform": "xochip",
@@ -2008,6 +2079,7 @@
 			"media/superpong/superpong.gif"
 		],
 		"desc": "A fast pong-like.",
+		"genre": "Sports",
 		"howto": "Key 6 serves the ball. Keys 7 and 9 slide the paddle, and the ball must not get past you.",
 		"event": "Octojam8",
 		"release": "2021-10-15",
@@ -2042,6 +2114,7 @@
 			"media/wdl/wdl.gif"
 		],
 		"desc": "That word game, but shorter.",
+		"genre": "Word",
 		"event": "Octojam9",
 		"release": "2022-10-10",
 		"platform": "chip8",
@@ -2075,6 +2148,7 @@
 			"media/knumberknower/knumberknower.gif"
 		],
 		"desc": "A game of bad typography.",
+		"genre": "Puzzle",
 		"howto": "Key 5 clicks through the title. A game of deliberately bad typography.",
 		"event": "Octojam10",
 		"release": "2023-10-28",
@@ -2109,6 +2183,7 @@
 			"media/tick/recording.gif"
 		],
 		"desc": "Rhythm one button game for Chip-8",
+		"genre": "Rhythm",
 		"howto": "Tap key A in time with the beat. A rhythm game with one button, so timing is all of it.",
 		"release": "2026-08-11",
 		"platform": "chip8",
@@ -2142,6 +2217,7 @@
 			"media/mato8/itch-image.png"
 		],
 		"desc": "Snake game (matopeli in Finnish)",
+		"genre": "Arcade",
 		"event": "GAMES MADE QVIICK???",
 		"release": "2023-01-14",
 		"platform": "chip8"
