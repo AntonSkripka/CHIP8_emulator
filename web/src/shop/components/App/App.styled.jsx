@@ -19,6 +19,46 @@ export const StoreToolbar = styled.div`
     border-bottom: 1px solid ${({ theme }) => theme.borderColor};
 `;
 
+export const GenreFilters = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 12px;
+`;
+
+const genreButtonStyles = ({ theme, $active }) => `
+    padding: 5px 9px;
+    border: 1px solid ${$active ? theme.accentColor : theme.borderColor};
+    color: ${$active ? theme.backgroundColor : theme.accentColor};
+    background: ${$active ? theme.accentColor : 'transparent'};
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.9rem;
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease,
+        box-shadow 180ms ease, transform 180ms ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        border-color: ${theme.accentColor};
+        color: ${theme.backgroundColor};
+        background: ${theme.accentColor};
+        box-shadow: 0 0 10px ${theme.shadowColor};
+    }
+
+    &:focus-visible {
+        outline: 2px solid ${theme.accentColor};
+        outline-offset: 2px;
+    }
+`;
+
+export const GenreButton = styled.button`
+    ${({ theme, $active }) => genreButtonStyles({ theme, $active })}
+`;
+
+export const ResetButton = styled(GenreButton)`
+    margin-left: auto;
+`;
+
 export const StoreKicker = styled.p`
     margin: 0 0 5px;
     color: ${({ theme }) => theme.accentColor};

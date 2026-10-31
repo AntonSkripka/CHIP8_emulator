@@ -3,6 +3,9 @@ import { GameCard } from '../GameCard/GameCard.jsx';
 import { GameDetails } from '../GameDetails/GameDetails.jsx';
 import {
     GameGrid,
+    GenreButton,
+    GenreFilters,
+    ResetButton,
     StoreDescription,
     StoreKicker,
     StoreMessage,
@@ -16,6 +19,7 @@ export default function App({ bridge }) {
     const [isDetailsClosing, setIsDetailsClosing] = useState(false);
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
+    const [filterGenre, setFilterGenre] = useState('all');
 
     useEffect(() => {
         let active = true;
@@ -34,9 +38,17 @@ export default function App({ bridge }) {
 
     const games = useMemo(() => catalog
         ? Object.entries(catalog.programs)
-            .map(([slug, game]) => ({ slug, ...game }))
+            .map(([slug, game]) => ({ slug, ...game, genre: game.genre || 'Other' }))
             .sort((left, right) => left.title.localeCompare(right.title))
         : [], [catalog]);
+
+    const genreCounts = useMemo(() => games.reduce((counts, game) => {
+        counts[game.genre] = (counts[game.genre] || 0) + 1;
+        return counts;
+    }, {}), [games]);
+
+    const genres = useMemo(() => Object.entries(genreCounts)
+        .sort(([left], [right]) => left.localeCompare(right)), [genreCounts]);
 
     const selectedGame = selectedSlug && catalog
         ? { slug: selectedSlug, ...catalog.programs[selectedSlug] }
@@ -95,12 +107,38 @@ export default function App({ bridge }) {
         }
     }
 
+    const filteredGames = useMemo(() => {
+        if (filterGenre === 'all') return games;
+        return games.filter(game => game.genre === filterGenre);
+    }, [games, filterGenre]);
+
     return (
         <StoreRoot>
             <StoreToolbar>
                 <div>
-                    <StoreKicker>GAME CATALOG / {catalog ? games.length : '...'} TITLES</StoreKicker>
+                    <StoreKicker>{catalog ? `${filterGenre.toUpperCase()} GAMES` : '...'} / {catalog ? filteredGames.length : '...'} TITLES</StoreKicker>
                     <StoreDescription>SELECT A GAME TO VIEW ITS DETAILS, ADD IT TO DISK, OR RUN IT.</StoreDescription>
+                    <GenreFilters aria-label="Filter games by genre">
+                        {genres.map(([genre, count]) => (
+                            <GenreButton
+                                key={genre}
+                                type="button"
+                                $active={filterGenre === genre}
+                                aria-pressed={filterGenre === genre}
+                                onClick={() => setFilterGenre(genre)}
+                            >
+                                {genre} ({count})
+                            </GenreButton>
+                        ))}
+                        <ResetButton
+                            type="button"
+                            $active={filterGenre === 'all'}
+                            aria-pressed={filterGenre === 'all'}
+                            onClick={() => setFilterGenre('all')}
+                        >
+                            Reset ({games.length})
+                        </ResetButton>
+                    </GenreFilters>
                 </div>
             </StoreToolbar>
 
@@ -108,7 +146,7 @@ export default function App({ bridge }) {
 
             {catalog ? (
                 <GameGrid>
-                    {games.map((game) => (
+                    {filteredGames.map((game) => (
                         <GameCard
                             key={game.slug}
                             game={game}
