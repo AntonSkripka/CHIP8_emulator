@@ -864,5 +864,4 @@ standard source module.
 
 For implementation-level detail, see the
 [CHIP Language compiler chapter](chip-language/README.md) and its per-file
-and per-function pages. The original Russian working specification remains
-unchanged at [`docs-locale/CHIP-LANGUAGE.md`](../docs-locale/CHIP-LANGUAGE.md).
+and per-function pages.

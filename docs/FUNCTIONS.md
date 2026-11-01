@@ -773,5 +773,4 @@ loaded when the virtual disk is empty and can be used by
 The source-specific documentation for the compiler requested in this
 documentation set is available in the [CHIP Language chapter](chip-language/README.md).
 The [assembler chapter](assembler/README.md) contains the detailed
-`web/src/assembler/asm.js` pages. The original Russian guide is preserved
-unchanged at [`docs-locale/FUNCTIONS.md`](../docs-locale/FUNCTIONS.md).
+`web/src/assembler/asm.js` pages.

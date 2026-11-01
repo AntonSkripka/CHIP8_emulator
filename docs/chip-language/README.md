@@ -11,7 +11,6 @@ The public entry point `compile` loads the root source and imports, tokenizes an
 ## Related references
 
 - [CHIP Language specification](../CHIP-LANGUAGE.md) and [function reference](../FUNCTIONS.md).
-- The Russian originals are mirrored without edits in `docs-locale/CHIP-LANGUAGE.md` and `docs-locale/FUNCTIONS.md`.
 
 ## Source-file subchapters
 

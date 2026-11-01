@@ -11,7 +11,6 @@ Turns CHIP-8 assembly text into addressable byte segments and provides HTML-safe
 ## Related references
 
 - [CHIP Language specification](../CHIP-LANGUAGE.md) and [function reference](../FUNCTIONS.md).
-- The Russian originals are mirrored without edits in `docs-locale/CHIP-LANGUAGE.md` and `docs-locale/FUNCTIONS.md`.
 
 ## Source-file subchapters
 
