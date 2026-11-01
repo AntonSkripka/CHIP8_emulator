@@ -24,7 +24,7 @@ The prepared catalogue data is in `web/public/roms/`: `programs.json` and `autho
 
 * **WebAssembly CHIP-8 Core:** The CHIP-8 interpreter and supporting C modules are compiled to WebAssembly. Super-CHIP and XO-CHIP extensions are not supported.
 * **Virtual Disk:** A C-based FAT/VFS layer provides a 1 MB virtual disk with up to 64 files and filenames limited to 17 UTF-8 bytes. Its contents are saved in browser IndexedDB and can be managed through the disk interface.
-* **Developer Tools:** The browser interface includes a CHIP-8 assembler, register and stack monitors, and a memory map.
+* **Developer Tools:** The browser interface includes a CHIP-8 assembler, a CHIP Language compiler MVP, register and stack monitors, and a memory map.
 * **ROM Loading:** Load `.ch8` ROM files using the file picker, drag and drop, or the virtual disk.
 * **React Game Store:** Browse the bundled catalogue, view game details and previews, run supported CHIP-8 games, or add supported games to the virtual disk. SCHIP/XO-CHIP games are listed but cannot be run or added to the disk.
 * **Color Themes:** Choose monochrome, green, amber, or blue; the selection is persisted in `localStorage`.
@@ -45,6 +45,12 @@ npm run dev
 ```
 
 The dev script compiles the C sources into WebAssembly before starting the server.
+
+Run the assembler and emulator-core tests with:
+
+```bash
+npm test
+```
 
 ### Production build and deployment
 Build the production site with:
@@ -85,7 +91,26 @@ The browser UI opens with a BIOS-style boot sequence and keyboard-operated main 
 
 ### Phase 2: Embedded Development IDE
 - [x] **Integrated Web Assembler:** Write raw mnemonics (e.g., `LD V0, 0xFF`) and compile them to bytecode on the fly.
+- [x] **CHIP Language MVP Compiler:** Compile `u8`/`bool` functions, locals, arithmetic, conditions, and loops to the `chip8-dev` profile. The developer editor has a separate **COMPILE CHIP LANGUAGE** action.
 - [x] **Low-Level Diagnostics:** Real-time visual monitoring of the 4KB RAM, Stack pointers, and V-registers.
+
+#### CHIP Language: Next Milestones
+1. **Runtime integration — implemented:** `npm run test:runtime` builds the WASM emulator and executes compiled programs covering calls, loops, short-circuit evaluation, division-by-zero faults, return values, BSS initialization, dynamic array bounds, RAM bounds, and `.rodata` write protection.
+2. **IDE runtime feedback — implemented:** Source maps locate runtime faults and highlight their source line; `main`'s exit code is shown in the status area and execution stops at the language exit loop.
+3. **Static data layout — implemented:** Typed `data`, `rodata`, and `bss` byte arrays are automatically placed after code; BSS is zeroed before `main` and the total layout is bounds-checked.
+4. **Memory model and indexed data access — implemented:** Arrays support `name[index]`, compile-time checks for constant indexes, runtime bounds traps for dynamic indexes, mutable `data`/`bss`, and runtime write protection for `rodata` in `chip8-dev`. CHIP-8 load/store instructions that cross RAM bounds also fault before partial updates.
+5. **Index width — decided:** Keep `u8` indexes in the MVP. Arrays larger than 256 bytes expose only indexes `0..255`; wider access will come with future `u4`, `i4`, `i8`, `u16`, and `i16` types.
+6. **VFS interface — decided:** Use an extensible VM-visible syscall in `chip8-dev`; source programs call ordinary standard-library functions, lowered to a request block. Validate user data in the library and repeat all memory/argument checks at the syscall boundary. Invalid RAM ranges cause a fatal runtime fault; ordinary VFS errors return status codes.
+7. **Array parameters — implemented:** Use `name: u8[]` for an immutable reference and `mut buffer: u8[]` for a mutable one. The frame ABI passes address and extent; ordinary functions support forwarding references and runtime bounds checks.
+8. **File names — decided:** Pass a byte array plus explicit length; bound it to 17 valid UTF-8 bytes and copy into a bounded NUL-terminated local buffer before calling the existing VFS.
+9. **Byte character literals — decided:** A character literal is one `u8` byte; direct ASCII plus `\xNN` and common escapes are supported, and non-ASCII UTF-8 is represented as multiple bytes.
+10. **VFS syscall ABI — implemented:** `SYS op` uses an immediate operation ID, `I` points to an 11-byte checked request block, and `V0` returns a status code. The WASM runtime tests cover read/write/size/delete, UTF-8 validation, bad ranges, read-only memory, and no partial RAM updates.
+11. **Standard library — implemented:** `disk.file_size`, `disk.read_file`, `disk.write_file`, and `disk.delete_file` built-ins lower typed array references into the checked syscall ABI. File-size/read-count outputs use 4-byte big-endian `u8[]`; whole-file read/write is limited by the CHIP-8 RAM buffer size.
+12. **Chunked disk I/O — deferred:** MVP reads/writes whole files that fit in CHIP-8 RAM; offsets and partial-transfer semantics are postponed.
+13. **Modules/imports — implemented:** Compile-time imports load `<module>.chip` from the virtual disk and support selected `pub fn`/`pub rodata` exports, qualified calls, nested imports, source maps, and cycle diagnostics. The IDE can save and load `.chip` source files. VFS functions use the built-in `disk.*` namespace; re-exports are deferred, and future standard modules will be ordinary `.chip` VFS files.
+14. **Optimization:** Introduce an explicit IR while preserving source maps and runtime checks.
+
+Run `npm test` for assembler/compiler and emulator-feedback unit tests. Run `npm run test:runtime` for tests against a freshly built WebAssembly emulator; it requires Emscripten.
 
 ### Phase 3: Storage & File Systems
 - [x] **C-Based VFS:** Custom Virtual File System and FAT layer running inside the WebAssembly instance.

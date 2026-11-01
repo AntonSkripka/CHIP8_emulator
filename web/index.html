@@ -139,8 +139,8 @@
 </div>
 <div class="about-section">
     <h2>[ VIRTUAL DISK / FAT VFS ]</h2>
-    <p>THE EMULATOR PROVIDES 1 MB OF VIRTUAL STORAGE. ROMS AND ASSEMBLY FILES ARE STORED IN THE VIRTUAL
-        FILE SYSTEM AND SYNCHRONIZED WITH BROWSER INDEXEDDB.</p>
+    <p>THE EMULATOR PROVIDES 1 MB OF VIRTUAL STORAGE. ROMS AND SOURCE FILES (.ASM / .CHIP) ARE STORED IN
+        THE VIRTUAL FILE SYSTEM AND SYNCHRONIZED WITH BROWSER INDEXEDDB.</p>
 </div>
 <p class="about-features">LOAD A GAME: DROP A .CH8 ROM ON THE LOAD ROM PANEL OR SELECT A FILE.<br>
     USER MODE: PLAY ROMS WITH A CLEAN DISPLAY.<br>
@@ -180,7 +180,7 @@
                     <section id="editor-container" class="terminal-panel">
                         <div class="editor-controls">
                             <input type="text" id="asm-filename" value="project.asm" placeholder="FILE NAME"
-                                spellcheck="false" aria-label="Assembly filename">
+                                spellcheck="false" aria-label="Source filename">
                             <button id="save-button" class="terminal-button">SAVE TO DISK</button>
                         </div>
                         <div class="editor-wrapper">
@@ -189,6 +189,8 @@
                             <textarea id="asm-editor" spellcheck="false" aria-label="CHIP-8 assembly editor"></textarea>
                         </div>
                         <button id="run-button" class="terminal-button">COMPILE &amp; RUN</button>
+                        <button id="compile-language-button" class="terminal-button">COMPILE CHIP LANGUAGE</button>
+                        <div id="asm-status" role="status" aria-live="polite"></div>
                     </section>
                 </div>
                 <section id="disk-panel" class="terminal-panel">

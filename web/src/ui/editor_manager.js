@@ -48,6 +48,18 @@ export class EditorManager {
         this.syncHighlightScroll();
     }
 
+    highlightLine(line) {
+        if (!this.editor || !Number.isInteger(line) || line < 1) return false;
+        const lines = this.editor.value.split('\n');
+        if (line > lines.length) return false;
+
+        const start = lines.slice(0, line - 1).reduce((offset, value) =>
+            offset + value.length + 1, 0);
+        this.editor.focus();
+        this.editor.setSelectionRange(start, start + lines[line - 1].length);
+        return true;
+    }
+
     syncHighlightScroll() {
         if (!this.highlightOverlay || !this.editor) return;
         this.highlightOverlay.scrollTop = this.editor.scrollTop;

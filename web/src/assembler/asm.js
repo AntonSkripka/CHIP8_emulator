@@ -1,227 +1,335 @@
-const commandTable = {
-    'CLS': 0x00E0,
-    'RET': 0x00EE,
-    'JP': 0x1000,
-    'CALL': 0x2000,
-    'SE': 0x3000,
-    'SNE': 0x4000,
-    'PUSH': 0xF0F1,
-    'POP': 0xF0F2,
-    'OR': 0x8001,
-    'AND': 0x8002,
-    'XOR': 0x8003,
-    'SUB': 0x8005,
-    'SHR': 0x8006,
-    'SUBN': 0x8007,
-    'SHL': 0x800E,
-    'RND': 0xC000,
-    'DRW': 0xD000,
-    'SKP': 0xE09E,
-    'SKNP': 0xE0A1
-};
+const DEFAULT_ORIGIN = 0x200;
+const MEMORY_SIZE = 0x1000;
+const LABEL_PATTERN = /^[A-Z_][A-Z0-9_]*$/;
+const EXTENDED_INSTRUCTIONS = new Set(['ENTER', 'LEAVE', 'ADJSP', 'DROP', 'LDX', 'STX', 'TRAP', 'LDI', 'SYS']);
+const CONDITIONAL_SKIPS = new Set(['SE', 'SNE', 'SKP', 'SKNP']);
 
-const defaultOrigin = 0x200;
+export class AssemblerError extends Error {
+    constructor(message, line, sourceLine) {
+        super(`Line ${line}: ${message}`);
+        this.name = 'AssemblerError';
+        this.line = line;
+        this.sourceLine = sourceLine;
+    }
+}
+
+function fail(statement, message) {
+    throw new AssemblerError(message, statement.line, statement.source);
+}
 
 function parseNumber(token) {
-    if (typeof token === 'number') return token;
-    if (typeof token !== 'string') return NaN;
-    const value = token.trim();
-
-    if (/^0x[0-9A-F]+$/i.test(value)) {
-        return parseInt(value, 16);
+    if (/^-?0x[0-9A-F]+$/i.test(token)) {
+        const negative = token.startsWith('-');
+        const digits = negative ? token.slice(3) : token.slice(2);
+        const value = Number.parseInt(digits, 16);
+        return negative ? -value : value;
     }
-    if (/^\d+$/.test(value)) {
-        return parseInt(value, 10);
-    }
+    if (/^-?\d+$/.test(token)) return Number.parseInt(token, 10);
     return NaN;
 }
 
-function maskNumericValue(value, opcodeBase, tokenIndex) {
-    if (typeof value !== 'number') return value;
-    if (tokenIndex === 0) return value;
-    const highNibble = opcodeBase & 0xF000;
-    if (highNibble === 0x1000 || highNibble === 0x2000 || highNibble === 0xA000 || highNibble === 0xB000) {
-        return value & 0x0FFF;
+function parseRegister(token) {
+    const match = /^V([0-9A-F])$/.exec(token);
+    return match ? Number.parseInt(match[1], 16) : null;
+}
+
+function expectArgumentCount(statement, args, expected) {
+    if (args.length !== expected) {
+        fail(statement, `${statement.tokens[0]} expects ${expected} argument${expected === 1 ? '' : 's'}, got ${args.length}.`);
     }
-    if (highNibble === 0x3000 || highNibble === 0x4000 || highNibble === 0x6000 || highNibble === 0x7000 || highNibble === 0xC000) {
-        return value & 0x00FF;
-    }
-    if (highNibble === 0xD000) {
-        return value & 0x000F;
+}
+
+function requireRegister(statement, token) {
+    const register = parseRegister(token);
+    if (register === null) fail(statement, `Invalid register "${token}"; expected V0 through VF.`);
+    return register;
+}
+
+function requireNumber(statement, token, min, max, description) {
+    const value = parseNumber(token);
+    if (!Number.isSafeInteger(value) || value < min || value > max) {
+        fail(statement, `Invalid ${description} "${token}"; expected a value from ${min} to ${max}.`);
     }
     return value;
 }
 
+function resolveAddress(statement, token, labels) {
+    const value = labels.get(token.toUpperCase()) ?? parseNumber(token);
+    if (!Number.isSafeInteger(value) || value < 0 || value >= MEMORY_SIZE) {
+        fail(statement, `Unknown label or invalid address "${token}".`);
+    }
+    return value;
+}
+
+function encodeExtendedInstruction(statement) {
+    const [rawInstruction, ...args] = statement.tokens;
+    const instruction = rawInstruction.toUpperCase();
+    const immediate = (min, max, description) => requireNumber(statement, args[0], min, max, description);
+
+    switch (instruction) {
+        case 'ENTER':
+            expectArgumentCount(statement, args, 0);
+            return [0x5001, 0x0000];
+        case 'LEAVE':
+            expectArgumentCount(statement, args, 0);
+            return [0x5001, 0x0100];
+        case 'ADJSP':
+            expectArgumentCount(statement, args, 1);
+            return [0x5001, 0x0200 | immediate(0, 0xFF, 'stack adjustment')];
+        case 'DROP':
+            expectArgumentCount(statement, args, 1);
+            return [0x5001, 0x0300 | immediate(0, 0xFF, 'stack adjustment')];
+        case 'LDX':
+            expectArgumentCount(statement, args, 1);
+            return [0x5001, 0x0400 | (immediate(-128, 127, 'signed frame offset') & 0xFF)];
+        case 'STX':
+            expectArgumentCount(statement, args, 1);
+            return [0x5001, 0x0500 | (immediate(-128, 127, 'signed frame offset') & 0xFF)];
+        case 'LDI':
+            expectArgumentCount(statement, args, 1);
+            return [0x5001, 0x0700 | (immediate(-128, 127, 'signed frame offset') & 0xFF)];
+        case 'TRAP':
+            expectArgumentCount(statement, args, 1);
+            return [0x5001, 0x0600 | immediate(0, 0xFF, 'runtime fault code')];
+        case 'SYS':
+            expectArgumentCount(statement, args, 1);
+            return [0x5001, 0x0800 | immediate(0, 0xFF, 'system call operation')];
+    }
+}
+
+function encodeInstruction(statement, labels) {
+    const [rawInstruction, ...args] = statement.tokens;
+    const instruction = rawInstruction.toUpperCase();
+    const reg = (index) => requireRegister(statement, args[index]);
+    const byte = (index) => requireNumber(statement, args[index], -128, 255, '8-bit value') & 0xFF;
+    const pair = (opcode, x = reg(0), y = reg(1)) => opcode | (x << 8) | (y << 4);
+
+    switch (instruction) {
+        case 'CLS':
+            expectArgumentCount(statement, args, 0);
+            return 0x00E0;
+        case 'RET':
+            expectArgumentCount(statement, args, 0);
+            return 0x00EE;
+        case 'JP':
+            if (args.length === 1) return 0x1000 | resolveAddress(statement, args[0], labels);
+            expectArgumentCount(statement, args, 2);
+            if (args[0].toUpperCase() !== 'V0') fail(statement, 'The indexed JP form is JP V0, address.');
+            return 0xB000 | resolveAddress(statement, args[1], labels);
+        case 'CALL':
+            expectArgumentCount(statement, args, 1);
+            return 0x2000 | resolveAddress(statement, args[0], labels);
+        case 'SE':
+        case 'SNE': {
+            expectArgumentCount(statement, args, 2);
+            const x = reg(0);
+            const y = parseRegister(args[1]);
+            if (y !== null) return (instruction === 'SE' ? 0x5000 : 0x9000) | (x << 8) | (y << 4);
+            return (instruction === 'SE' ? 0x3000 : 0x4000) | (x << 8) | byte(1);
+        }
+        case 'LD':
+            return encodeLoad(statement, args, labels);
+        case 'ADD': {
+            expectArgumentCount(statement, args, 2);
+            if (args[0].toUpperCase() === 'I') return 0xF01E | (reg(1) << 8);
+            const x = reg(0);
+            const y = parseRegister(args[1]);
+            return y !== null
+                ? 0x8004 | (x << 8) | (y << 4)
+                : 0x7000 | (x << 8) | byte(1);
+        }
+        case 'OR':
+            expectArgumentCount(statement, args, 2);
+            return pair(0x8001);
+        case 'AND':
+            expectArgumentCount(statement, args, 2);
+            return pair(0x8002);
+        case 'XOR':
+            expectArgumentCount(statement, args, 2);
+            return pair(0x8003);
+        case 'SUB':
+            expectArgumentCount(statement, args, 2);
+            return pair(0x8005);
+        case 'SUBN':
+            expectArgumentCount(statement, args, 2);
+            return pair(0x8007);
+        case 'MUL':
+            expectArgumentCount(statement, args, 2);
+            return pair(0xF00C);
+        case 'DIV':
+            expectArgumentCount(statement, args, 2);
+            return pair(0xF00D);
+        case 'REM':
+            expectArgumentCount(statement, args, 2);
+            return pair(0xF00F);
+        case 'SHR':
+            expectArgumentCount(statement, args, 1);
+            return 0x8006 | (reg(0) << 8);
+        case 'SHL':
+            expectArgumentCount(statement, args, 1);
+            return 0x800E | (reg(0) << 8);
+        case 'RND':
+            expectArgumentCount(statement, args, 2);
+            return 0xC000 | (reg(0) << 8) | byte(1);
+        case 'DRW':
+            expectArgumentCount(statement, args, 3);
+            return 0xD000 | (reg(0) << 8) | (reg(1) << 4) |
+                requireNumber(statement, args[2], 0, 15, 'sprite height');
+        case 'PUSH':
+            expectArgumentCount(statement, args, 1);
+            return 0xF0F1 | (reg(0) << 8);
+        case 'POP':
+            expectArgumentCount(statement, args, 1);
+            return 0xF0F2 | (reg(0) << 8);
+        case 'PUSHA':
+            expectArgumentCount(statement, args, 0);
+            return 0xF0F3;
+        case 'POPA':
+            expectArgumentCount(statement, args, 0);
+            return 0xF0F4;
+        case 'PEAK':
+            expectArgumentCount(statement, args, 1);
+            return 0xF0F5 | (reg(0) << 8);
+        case 'SIZESTACK':
+            expectArgumentCount(statement, args, 1);
+            return 0xF0F6 | (reg(0) << 8);
+        case 'CLEARSTACK':
+            expectArgumentCount(statement, args, 0);
+            return 0xF0F7;
+        case 'SKP':
+            expectArgumentCount(statement, args, 1);
+            return 0xE09E | (reg(0) << 8);
+        case 'SKNP':
+            expectArgumentCount(statement, args, 1);
+            return 0xE0A1 | (reg(0) << 8);
+        default:
+            fail(statement, `Unknown instruction or directive "${rawInstruction}".`);
+    }
+}
+
+function encodeLoad(statement, args, labels) {
+    expectArgumentCount(statement, args, 2);
+    const destination = args[0].toUpperCase();
+    const source = args[1].toUpperCase();
+
+    if (destination === 'I') return 0xA000 | resolveAddress(statement, args[1], labels);
+    if (destination === 'DT' || destination === 'ST' || destination === 'F' || destination === 'B') {
+        const x = requireRegister(statement, source);
+        const opcode = { DT: 0xF015, ST: 0xF018, F: 0xF029, B: 0xF033 }[destination];
+        return opcode | (x << 8);
+    }
+    if (destination === '[I]') return 0xF055 | (requireRegister(statement, source) << 8);
+
+    const x = requireRegister(statement, destination);
+    if (source === 'DT') return 0xF007 | (x << 8);
+    if (source === 'K') return 0xF00A | (x << 8);
+    if (source === '[I]') return 0xF065 | (x << 8);
+
+    const y = parseRegister(source);
+    if (y !== null) return 0x8000 | (x << 8) | (y << 4);
+    return 0x6000 | (x << 8) | requireNumber(statement, args[1], -128, 255, '8-bit value');
+}
+
+function tokenize(line) {
+    if (/,\s*,|^\s*,|,\s*$/.test(line)) return null;
+    return line.replaceAll(',', ' ').trim().split(/\s+/).filter(Boolean);
+}
+
 export function asmToBin(code) {
-    const labels = {};
-    const cleanCode = code.replace(/\r/g, "").replace(/\s*;[^\n\r]*/g, "").trim();
-    const lines = cleanCode.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+    if (typeof code !== 'string') {
+        throw new TypeError('Assembly source must be a string.');
+    }
 
-    let currentAddr = defaultOrigin;
-    const instructionLines = [];
+    const labels = new Map();
+    const statements = [];
+    let address = DEFAULT_ORIGIN;
+    const lines = code.replace(/\r/g, '').split('\n');
 
-    for (const line of lines) {
-        const tokens = line.replaceAll(",", " ").split(/\s+/).filter(Boolean);
-        const cmd = tokens[0].toUpperCase();
+    for (let index = 0; index < lines.length; index++) {
+        const source = lines[index].split(';', 1)[0].trim();
+        if (!source) continue;
 
-        if (cmd.endsWith(':')) {
-            labels[cmd.slice(0, -1)] = currentAddr;
+        const statement = { line: index + 1, source, tokens: [], address, size: 0 };
+        let body = source;
+        const colon = body.indexOf(':');
+        if (colon !== -1) {
+            const label = body.slice(0, colon).trim().toUpperCase();
+            if (!LABEL_PATTERN.test(label)) fail(statement, `Invalid label "${body.slice(0, colon).trim()}".`);
+            if (labels.has(label)) fail(statement, `Duplicate label "${label}".`);
+            labels.set(label, address);
+            body = body.slice(colon + 1).trim();
+            if (!body) continue;
+        }
+
+        const tokens = tokenize(body);
+        if (!tokens || tokens.length === 0) fail(statement, 'Malformed argument separators.');
+        statement.tokens = tokens;
+        const operation = tokens[0].toUpperCase();
+
+        if (operation === 'ORG') {
+            expectArgumentCount(statement, tokens.slice(1), 1);
+            address = requireNumber(statement, tokens[1], 0, MEMORY_SIZE - 1, 'origin');
             continue;
         }
 
-        if (cmd === 'ORG') {
-            const val = parseNumber(tokens[1]);
-            if (!isNaN(val)) currentAddr = val;
-            continue;
+        statement.address = address;
+        statement.size = operation === 'DB'
+            ? tokens.length - 1
+            : EXTENDED_INSTRUCTIONS.has(operation) ? 4 : 2;
+        if (operation === 'DB' && statement.size === 0) fail(statement, 'DB expects at least one byte value.');
+        if (address + statement.size > MEMORY_SIZE) {
+            fail(statement, 'The statement exceeds the 4 KiB CHIP-8 address space.');
         }
+        statements.push(statement);
+        address += statement.size;
+    }
 
-        if (cmd === 'DB') {
-            instructionLines.push({ tokens, addr: currentAddr, type: 'DB' });
-            currentAddr += tokens.length - 1;
-        } else {
-            instructionLines.push({ tokens, addr: currentAddr, type: 'INST' });
-            currentAddr += 2;
+    for (let index = 0; index + 1 < statements.length; index++) {
+        const statement = statements[index];
+        const next = statements[index + 1];
+        const operation = statement.tokens[0].toUpperCase();
+        const nextOperation = next.tokens[0].toUpperCase();
+        if (CONDITIONAL_SKIPS.has(operation) &&
+            EXTENDED_INSTRUCTIONS.has(nextOperation) &&
+            statement.address + statement.size === next.address) {
+            fail(next, 'A CHIP-8 skip instruction cannot target a chip8-dev extended instruction.');
         }
     }
 
+    const occupied = new Set();
     const segments = [];
     let currentSegment = null;
 
-    for (const line of instructionLines) {
-        const { tokens, addr, type } = line;
-        
-        if (!currentSegment || addr !== currentSegment.start + getSegmentSize(currentSegment)) {
+    for (const statement of statements) {
+        if (!currentSegment || statement.address !== currentSegment.start + getSegmentSize(currentSegment)) {
             if (currentSegment) segments.push(currentSegment);
-            currentSegment = { start: addr, bytes: [] };
+            currentSegment = { start: statement.address, bytes: [] };
         }
 
-        if (type === 'DB') {
-            for (let i = 1; i < tokens.length; i++) {
-                const val = parseNumber(tokens[i]) || 0;
-                currentSegment.bytes.push({ val: val & 0xFF, size: 1 });
-            }
-            continue;
+        const operation = statement.tokens[0].toUpperCase();
+        const values = operation === 'DB'
+            ? statement.tokens.slice(1).map((token) =>
+                requireNumber(statement, token, -128, 255, 'byte value') & 0xFF)
+            : EXTENDED_INSTRUCTIONS.has(operation)
+                ? encodeExtendedInstruction(statement)
+                : [encodeInstruction(statement, labels)];
+
+        for (let index = 0; index < statement.size; index++) {
+            const byteAddress = statement.address + index;
+            if (occupied.has(byteAddress)) fail(statement, `Address 0x${byteAddress.toString(16).toUpperCase()} is defined more than once.`);
+            occupied.add(byteAddress);
         }
 
-        const opcode = encodeInstruction(tokens, labels);
-        currentSegment.bytes.push({ val: opcode & 0xFFFF, size: 2 });
+        for (const value of values) {
+            currentSegment.bytes.push({
+                val: value,
+                size: operation === 'DB' ? 1 : 2
+            });
+        }
     }
 
     if (currentSegment) segments.push(currentSegment);
     return segments;
-}
-
-function getReg(token) {
-    if (!token || !token.startsWith('V')) return null;
-    const hex = token.charAt(1);
-    const val = parseInt(hex, 16);
-    return isNaN(val) ? null : val;
-}
-
-function encodeInstruction(tokens, labels) {
-    const instr = tokens[0].toUpperCase();
-    const arg1 = tokens[1]?.toUpperCase();
-    const arg2 = tokens[2]?.toUpperCase();
-    const arg3 = tokens[3]?.toUpperCase();
-
-    const x = getReg(arg1);
-    const y = getReg(arg2);
-    const n = parseNumber(arg3);
-    const nn = parseNumber(arg2);
-    const addr = labels[arg1] ?? parseNumber(arg1);
-
-    switch (instr) {
-        case 'CLS':
-            return 0x00E0;
-        case 'RET':
-            return 0x00EE;
-        case 'JP':
-            if (arg2) {
-                return 0xB000 | ((labels[arg2] ?? parseNumber(arg2)) & 0x0FFF);
-            }
-            return 0x1000 | (addr & 0x0FFF);
-        case 'CALL':
-            return 0x2000 | ((labels[arg1] ?? parseNumber(arg1)) & 0x0FFF);
-        case 'SE':
-            if (y !== null) return 0x5000 | (x << 8) | (y << 4);
-            return 0x3000 | (x << 8) | (nn & 0xFF);
-        case 'SNE':
-            if (y !== null) return 0x9000 | (x << 8) | (y << 4);
-            return 0x4000 | (x << 8) | (nn & 0xFF);
-        case 'LD':
-            return encodeLD(arg1, arg2, labels);
-        case 'ADD':
-            if (arg1 === 'I') {
-                return 0xF01E | (getReg(arg2) << 8);
-            }
-            if (y !== null) {
-                return 0x8004 | (x << 8) | (y << 4);
-            }
-            return 0x7000 | (x << 8) | (nn & 0xFF);
-        case 'OR':
-            return 0x8001 | (x << 8) | (y << 4);
-        case 'AND':
-            return 0x8002 | (x << 8) | (y << 4);
-        case 'XOR':
-            return 0x8003 | (x << 8) | (y << 4);
-        case 'SUB':
-            return 0x8005 | (x << 8) | (y << 4);
-        case 'SHR':
-            return 0x8006 | (x << 8);
-        case 'SUBN':
-            return 0x8007 | (x << 8) | (y << 4);
-        case 'SHL':
-            return 0x800E | (x << 8);
-        case 'RND':
-            return 0xC000 | (x << 8) | (nn & 0xFF);
-        case 'DRW':
-            return 0xD000 | (x << 8) | (y << 4) | (parseNumber(arg3) & 0xF);
-        case 'PUSH':
-            return 0xF0F1 | (x << 8);
-        case 'POP':
-            return 0xF0F2 | (x << 8);
-        case 'PUSHA':
-            return 0xF0F3;
-        case 'POPA':
-            return 0xF0F4;
-        case 'PEAK':
-            return 0xF0F5 | (x << 8);
-        case 'SIZESTACK':
-            return 0xF0F6 | (x << 8);
-        case 'CLEARSTACK':
-            return 0xF0F7;
-        case 'MUL':
-            return 0xF00C | (x << 8) | (y << 4);
-        case 'DIV':
-            return 0xF00D | (x << 8) | (y << 4);
-        case 'REM':
-            return 0xF00F | (x << 8) | (y << 4);
-        case 'SKP':
-            return 0xE09E | (x << 8);
-        case 'SKNP':
-            return 0xE0A1 | (x << 8);
-        default:
-            return 0;
-    }
-}
-
-function encodeLD(arg1, arg2, labels) {
-    if (arg1 === 'I') return 0xA000 | ( (labels[arg2] ?? parseNumber(arg2)) & 0x0FFF);
-    if (arg1 === 'DT') return 0xF015 | (getReg(arg2) << 8);
-    if (arg1 === 'ST') return 0xF018 | (getReg(arg2) << 8);
-    if (arg1 === 'F')  return 0xF029 | (getReg(arg2) << 8);
-    if (arg1 === 'B')  return 0xF033 | (getReg(arg2) << 8);
-    if (arg1 === '[I]') return 0xF055 | (getReg(arg2) << 8);
-
-    const r1 = getReg(arg1);
-    if (arg2 === 'DT') return 0xF007 | (r1 << 8);
-    if (arg2 === 'K')  return 0xF00A | (r1 << 8);
-    if (arg2 === '[I]') return 0xF065 | (r1 << 8);
-    
-    const r2 = getReg(arg2);
-    if (r2 !== null) return 0x8000 | (r1 << 8) | (r2 << 4);
-    
-    return 0x6000 | (r1 << 8) | (parseNumber(arg2) & 0xFF);
 }
 
 function getSegmentSize(seg) {
@@ -236,7 +344,8 @@ export function highlightCode(text) {
     const keywords = [
         'CLS', 'RET', 'JP', 'CALL', 'SE', 'SNE', 'LD', 'ADD', 'OR', 'AND', 'XOR', 
         'SUB', 'SHR', 'SUBN', 'SHL', 'RND', 'DRW', 'PUSH', 'POP', 'SKP', 'SKNP', 'DB', 'ORG',
-        'PUSHA', 'POPA', 'SIZESTACK', 'PEAK', 'CLEARSTACK', 'MUL', 'DIV', 'REM'
+        'PUSHA', 'POPA', 'SIZESTACK', 'PEAK', 'CLEARSTACK', 'MUL', 'DIV', 'REM',
+        'ENTER', 'LEAVE', 'ADJSP', 'DROP', 'LDX', 'STX', 'LDI', 'TRAP', 'SYS'
     ];
     const registers = [
         'V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 

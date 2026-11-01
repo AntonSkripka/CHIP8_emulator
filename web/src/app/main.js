@@ -49,6 +49,15 @@ export async function startApplication({
     }
     const core = new Chip8Core(module, asmToBin);
     core.init();
+    const editor = documentRef.getElementById('asm-editor');
+    const status = documentRef.getElementById('asm-status');
+    const editorManager = new EditorManager({
+        editor,
+        highlightOverlay: documentRef.getElementById('asm-highlight'),
+        lineNumbers: documentRef.getElementById('line-numbers'),
+        highlightCode
+    });
+    editorManager.attach();
     const display = new Chip8Display({
         canvas: documentRef.getElementById('display'),
         core
@@ -74,17 +83,43 @@ export async function startApplication({
             now: () => windowRef.performance.now(),
             requestFrame: (callback) => windowRef.requestAnimationFrame(callback)
         },
-        logger
+        logger,
+        moduleResolver: (filename) => disk.readFile(filename),
+        onRuntimeFault: ({ fault, pc, source }) => {
+            const faultNames = {
+                1: 'Stack overflow',
+                2: 'Stack underflow',
+                3: 'Call stack overflow',
+                4: 'Call stack underflow',
+                5: 'Division by zero',
+                6: 'Stack underflow',
+                7: 'Invalid stack frame',
+                8: 'Invalid instruction',
+                9: 'Memory bounds violation',
+                10: 'Write to read-only memory'
+            };
+            const sourceLocation = source
+                ? ` at ${source.fileName ? `${source.fileName}:` : ''}${source.line}:${source.column}`
+                : '';
+            const activeFilename = documentRef.getElementById('asm-filename')?.value;
+            if (source && (!source.fileName || source.fileName === activeFilename)) {
+                editorManager.highlightLine(source.line);
+            }
+            if (status) {
+                status.textContent = `Runtime Error: ${faultNames[fault] ??
+                    `Unknown fault ${fault}`} at PC=0x${pc.toString(16).toUpperCase().padStart(3, '0')}${sourceLocation}`;
+                status.className = 'error';
+            }
+        },
+        onProgramExit: ({ exitCode }) => {
+            if (status) {
+                status.textContent = exitCode === null
+                    ? 'Program finished.'
+                    : `Program exited with code ${exitCode}.`;
+                status.className = 'success';
+            }
+        }
     });
-
-    const editor = documentRef.getElementById('asm-editor');
-    const editorManager = new EditorManager({
-        editor,
-        highlightOverlay: documentRef.getElementById('asm-highlight'),
-        lineNumbers: documentRef.getElementById('line-numbers'),
-        highlightCode
-    });
-    editorManager.attach();
 
     const refreshDisk = () => diskUi.refresh();
     const diskUi = new DiskUiManager({
@@ -96,8 +131,9 @@ export async function startApplication({
         confirmDelete,
         showAlert,
         logger,
-        onLoadSource: (source) => {
+        onLoadSource: (source, filename) => {
             editor.value = source;
+            documentRef.getElementById('asm-filename').value = filename;
             editor.dispatchEvent(new windowRef.Event('input'));
         },
         onRunRom: (rom) => {
@@ -114,7 +150,21 @@ export async function startApplication({
     keyboard.attach();
 
     documentRef.getElementById('run-button').addEventListener('click', () => {
-        emulator.runAsm(editor?.value ?? '');
+        const error = emulator.runAsm(editor?.value ?? '');
+        if (status) {
+            status.textContent = error ? error.message : 'Compiled and loaded successfully.';
+            status.className = error ? 'error' : 'success';
+        }
+    });
+
+    documentRef.getElementById('compile-language-button').addEventListener('click', () => {
+        const error = emulator.runLanguage(editor?.value ?? '', {
+            sourceName: documentRef.getElementById('asm-filename')?.value.trim() || undefined
+        });
+        if (status) {
+            status.textContent = error ? error.message : 'CHIP Language compiled and loaded successfully.';
+            status.className = error ? 'error' : 'success';
+        }
     });
 
     documentRef.getElementById('save-button').addEventListener('click', () => {
@@ -159,7 +209,7 @@ export async function startApplication({
     };
 }
 
-function saveAssembly({ editor, editorManager, filenameInput, statusElement, disk, refreshDisk, encoder, showAlert }) {
+export function saveAssembly({ editor, editorManager, filenameInput, statusElement, disk, refreshDisk, encoder, showAlert }) {
     let filename = filenameInput.value.trim();
     const source = editor?.value ?? '';
 
@@ -174,11 +224,15 @@ function saveAssembly({ editor, editorManager, filenameInput, statusElement, dis
         return;
     }
 
-    if (!filename.toLowerCase().endsWith('.asm')) filename += '.asm';
+    const lowerFilename = filename.toLowerCase();
+    const extension = lowerFilename.endsWith('.chip')
+        ? '.chip'
+        : lowerFilename.endsWith('.asm') ? '.asm' : '.asm';
+    if (!lowerFilename.endsWith('.asm') && !lowerFilename.endsWith('.chip')) filename += '.asm';
     filenameInput.value = filename;
 
     if (filename.length > 17) {
-        showAlert(`The file name is too long (${filename.length} characters). The maximum length is 17 characters, including .asm.`);
+        showAlert(`The file name is too long (${filename.length} characters). The maximum length is 17 characters, including ${extension}.`);
         return;
     }
 
@@ -193,7 +247,7 @@ function saveAssembly({ editor, editorManager, filenameInput, statusElement, dis
     editor.value = '';
     editorManager.updateHighlight();
     editorManager.updateLineNumbers();
-    statusElement.textContent = `✓ Saved ASM: ${filename}`;
+    statusElement.textContent = `✓ Saved ${extension === '.chip' ? 'CHIP source' : 'ASM'}: ${filename}`;
     statusElement.className = 'success';
     setTimeout(() => {
         statusElement.textContent = '';

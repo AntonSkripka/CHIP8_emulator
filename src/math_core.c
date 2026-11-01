@@ -14,6 +14,10 @@ void math_mul(uint8_t x, uint8_t y) {
 
 void math_div(uint8_t x, uint8_t y) {
     if (instance.V[y] == 0) {
+        if (instance.chip8_dev_mode) {
+            instance.execution_fault = CHIP8_FAULT_DIVISION_BY_ZERO;
+            return;
+        }
         instance.V[0xF] = 1;
         instance.V[x] = 0;
         return;
@@ -25,6 +29,10 @@ void math_div(uint8_t x, uint8_t y) {
 
 void math_rem(uint8_t x, uint8_t y) {
     if (instance.V[y] == 0) {
+        if (instance.chip8_dev_mode) {
+            instance.execution_fault = CHIP8_FAULT_DIVISION_BY_ZERO;
+            return;
+        }
         instance.V[0xF] = 1; 
         instance.V[x] = 0;
         return;

@@ -8,6 +8,8 @@
     "deploy": "make deploy",
     "dev:server": "vite",
     "build:site": "vite build",
+    "test": "node --test tests/assembler.test.js tests/compiler.test.js tests/emulator-runtime.test.js tests/source-files.test.js",
+    "test:runtime": "make wasm && node --test tests/runtime.test.js",
     "preview": "vite preview"
   },
   "devDependencies": {

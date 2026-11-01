@@ -825,6 +825,20 @@ textarea:focus-visible,
     animation: terminalBlink 600ms steps(2, start) infinite;
 }
 
+#asm-status {
+    min-height: 1.25em;
+    color: var(--muted-color);
+    overflow-wrap: anywhere;
+}
+
+#asm-status.success {
+    color: var(--accent-color);
+}
+
+#asm-status.error {
+    color: #ff6666;
+}
+
 #emulator-screen[data-mode="user"] #screens-row {
     grid-template-columns: minmax(0, 640px);
     justify-content: center;

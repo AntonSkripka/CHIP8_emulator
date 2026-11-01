@@ -89,11 +89,11 @@ export class DiskUiManager {
             return;
         }
 
-        if (filename.toLowerCase().endsWith('.asm')) {
+        if (filename.toLowerCase().endsWith('.asm') || filename.toLowerCase().endsWith('.chip')) {
             const decoder = new TextDecoder();
             const textCode = decoder.decode(romBytes);
             if (this.editor) {
-                this.onLoadSource(textCode);
+                this.onLoadSource(textCode, filename);
                 this.logger.log(`[VFS UI] Source file ${filename} loaded into the editor.`);
             }
         } else {
