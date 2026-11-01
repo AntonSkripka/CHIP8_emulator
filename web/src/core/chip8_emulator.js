@@ -141,7 +141,6 @@ export class Chip8Emulator {
                 resolveModule: this.moduleResolver,
                 sourceName
             });
-            console.log(program);
             this.reset();
             this.core.setQuirks();
             this.core.setChip8DevMode(true);
