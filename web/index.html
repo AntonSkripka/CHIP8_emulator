@@ -103,7 +103,23 @@
                         <span>BLUE TERMINAL</span>
                     </button>
                 </div>
-                <p class="navigation-hint">[↑/↓] SELECT &nbsp; [ENTER] APPLY &nbsp; [ESC] RETURN</p>
+
+                <pre class="box-title">╔══════════════════════════════════════╗
+║           GIF COLOR MODE             ║
+╚══════════════════════════════════════╝</pre>
+                <h2 class="screen-title" style="margin-top: 24px;">GIF PREVIEW COLOR MODE</h2>
+                <p class="system-prompt">USE [←/→] TO SELECT GIF COLOR MODE:</p>
+                <div id="gif-color-options" class="theme-options" role="radiogroup" aria-label="GIF color mode">
+                    <button class="theme-option" data-gif-color-mode="theme" role="radio" aria-checked="false">
+                        <span class="theme-cursor" aria-hidden="true">&nbsp;</span>
+                        <span>THEME PALETTE</span>
+                    </button>
+                    <button class="theme-option" data-gif-color-mode="original" role="radio" aria-checked="false">
+                        <span class="theme-cursor" aria-hidden="true">&nbsp;</span>
+                        <span>ORIGINAL COLORS</span>
+                    </button>
+                </div>
+                <p class="navigation-hint">[↑/↓] THEME &nbsp; [←/→] GIF MODE &nbsp; [ENTER] APPLY &nbsp; [ESC] RETURN</p>
                 <button class="terminal-button back-button" data-action="home">[ ESC ] RETURN TO MAIN MENU</button>
             </div>
             <footer class="terminal-footer">CONFIGURATION SAVED LOCALLY <span>READY_</span></footer>

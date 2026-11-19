@@ -18,6 +18,7 @@ const shopScreen = documentRef.getElementById('shop-screen');
 const screens = [bootScreen, homeScreen, settingsScreen, aboutScreen, emulatorScreen, shopScreen];
 const menuOptions = [...documentRef.querySelectorAll('.menu-option')];
 const themeOptions = [...documentRef.querySelectorAll('.theme-option')];
+const gifColorOptions = [...documentRef.querySelectorAll('[data-gif-color-mode]')];
 new AnimatedBackground({
     container: documentRef.getElementById('terminal-background'),
     documentRef,
@@ -27,13 +28,31 @@ let currentScreen = 'boot';
 let selectedMenuIndex = 0;
 let selectedThemeIndex = THEMES.indexOf(themeManager.getTheme());
 let activeThemeIndex = selectedThemeIndex;
+let selectedGifColorModeIndex = 0;
+let activeGifColorModeIndex = 0;
 let emulatorStarted = false;
 let emulatorStartPromise;
 let emulatorApplication;
 let gameStoreMounted = false;
 let gameStoreBridge;
 
+function initGifColorMode() {
+    try {
+        const savedMode = windowRef.localStorage.getItem('chip8-gif-color-mode');
+        if (savedMode === 'theme' || savedMode === 'original') {
+            const modeIndex = savedMode === 'theme' ? 0 : 1;
+            selectedGifColorModeIndex = modeIndex;
+            activeGifColorModeIndex = modeIndex;
+        }
+    } catch (error) {
+        console.warn('Could not read the saved GIF color mode:', error);
+    }
+}
+
+initGifColorMode();
 updateThemeOptions();
+updateGifColorOptions();
+applyGifColorMode();
 animateBoot();
 
 documentRef.addEventListener('click', (event) => {
@@ -47,6 +66,13 @@ documentRef.addEventListener('click', (event) => {
     if (themeElement) {
         selectThemeOption(THEMES.indexOf(themeElement.dataset.themeOption));
         applySelectedTheme();
+        return;
+    }
+
+    const gifColorElement = event.target.closest('[data-gif-color-mode]');
+    if (gifColorElement) {
+        selectGifColorMode(gifColorOptions.indexOf(gifColorElement));
+        applyGifColorMode();
     }
 });
 
@@ -118,6 +144,7 @@ function showScreen(name) {
         focusMenuOption();
     } else if (name === 'settings') {
         themeOptions[selectedThemeIndex]?.focus();
+        updateGifColorOptions();
     } else if (name === 'emulator') {
         documentRef.getElementById('emulator-title').focus();
     }
@@ -144,14 +171,33 @@ function handleSettingsKey(event) {
         event.preventDefault();
         const direction = event.key === 'ArrowDown' ? 1 : -1;
         selectThemeOption((selectedThemeIndex + direction + THEMES.length) % THEMES.length);
-    } else if (event.key === 'Enter') {
+    }
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        const direction = event.key === 'ArrowRight' ? 1 : -1;
+        selectGifColorMode((selectedGifColorModeIndex + direction + gifColorOptions.length) % gifColorOptions.length);
+    }
+    else if (event.key === 'Enter') {
         event.preventDefault();
         applySelectedTheme();
-    } else if (/^[1-4]$/.test(event.key)) {
+        applyGifColorMode();
+    }
+    else if (/^[1-4]$/.test(event.key)) {
         event.preventDefault();
         selectThemeOption(Number(event.key) - 1);
         applySelectedTheme();
-    } else if (event.key === 'Escape') {
+    }
+    else if (event.key === '5') {
+        event.preventDefault();
+        selectGifColorMode(0);
+        applyGifColorMode();
+    }
+    else if (event.key === '6') {
+        event.preventDefault();
+        selectGifColorMode(1);
+        applyGifColorMode();
+    }
+    else if (event.key === 'Escape') {
         event.preventDefault();
         showScreen('home');
     }
@@ -257,12 +303,43 @@ function applySelectedTheme() {
     activeThemeIndex = selectedThemeIndex;
     themeManager.setTheme(THEMES[activeThemeIndex]);
     updateThemeOptions();
+    updateGifColorOptions();
 }
 
 function updateThemeOptions() {
     themeOptions.forEach((option, index) => {
         const isActive = index === activeThemeIndex;
         const isFocused = index === selectedThemeIndex;
+        option.setAttribute('aria-checked', String(isActive));
+        option.classList.toggle('is-selected', isFocused);
+        option.classList.toggle('is-active', isActive);
+        option.querySelector('.theme-cursor').textContent = isFocused ? '>' : '\u00a0';
+    });
+}
+
+function selectGifColorMode(index) {
+    if (index < 0 || index >= gifColorOptions.length) return;
+    selectedGifColorModeIndex = index;
+    updateGifColorOptions();
+    gifColorOptions[selectedGifColorModeIndex].focus();
+}
+
+function applyGifColorMode() {
+    activeGifColorModeIndex = selectedGifColorModeIndex;
+    const mode = gifColorOptions[activeGifColorModeIndex]?.dataset.gifColorMode || 'theme';
+    documentRef.documentElement.dataset.gifColorMode = mode;
+    try {
+        windowRef.localStorage.setItem('chip8-gif-color-mode', mode);
+    } catch (error) {
+        console.warn('Could not save the selected GIF color mode:', error);
+    }
+    updateGifColorOptions();
+}
+
+function updateGifColorOptions() {
+    gifColorOptions.forEach((option, index) => {
+        const isActive = index === activeGifColorModeIndex;
+        const isFocused = index === selectedGifColorModeIndex;
         option.setAttribute('aria-checked', String(isActive));
         option.classList.toggle('is-selected', isFocused);
         option.classList.toggle('is-active', isActive);

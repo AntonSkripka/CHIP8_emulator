@@ -48,6 +48,10 @@
     --shadow-color: rgb(85 255 255 / 25%);
 }
 
+:root[data-gif-color-mode="original"] {
+    --shop-image-filter: none;
+}
+
 :root[data-theme="green"],
 :root[data-theme="amber"] {
     --glow-effect: 0 0 7px var(--accent-color), 0 0 16px var(--shadow-color);
