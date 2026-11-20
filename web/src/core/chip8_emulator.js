@@ -120,7 +120,7 @@ export class Chip8Emulator {
         this.display.clear();
     }
 
-    runAsm(source, { profile = 'chip8' } = {}) {
+    runAsm(source, { profile = 'chip8-dev' } = {}) {
         try {
             const segments = this.core.assemble(source);
             this.core.validateSegments(segments);
